@@ -179,7 +179,7 @@ class UserAPI(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_queryset(self):
-        return User.objects.filter(organizations=self.request.user.active_organization)
+        return User.objects.filter(organizations__in=self.request.user.organizations.all()).distinct()
 
     @extend_schema(exclude=True)
     @action(detail=True, methods=['delete', 'post'], permission_required=all_permissions.avatar_any)
@@ -216,7 +216,9 @@ class UserAPI(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
-        self.request.user.active_organization.add_user(instance)
+        first_org = self.request.user.organizations.first()
+        if first_org:
+            first_org.add_user(instance)
 
     def retrieve(self, request, *args, **kwargs):
         return super(UserAPI, self).retrieve(request, *args, **kwargs)

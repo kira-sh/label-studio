@@ -27,7 +27,15 @@ export const ProjectsPage = () => {
   const [networkState, setNetworkState] = React.useState(null);
   const [currentPage, setCurrentPage] = useState(getCurrentPage());
   const [totalItems, setTotalItems] = useState(1);
+  const [orgMap, setOrgMap] = React.useState({});
   const setContextProps = useContextProps();
+
+  React.useEffect(() => {
+    api.callApi("organizations").then((data) => {
+      const list = data?.results ?? data ?? [];
+      setOrgMap(Object.fromEntries(list.map((o) => [o.id, o.title])));
+    });
+  }, []);
 
   useUpdatePageTitle("Projects");
   const defaultPageSize = Number.parseInt(localStorage.getItem("pages:projects-list") ?? 30);
@@ -47,6 +55,7 @@ export const ProjectsPage = () => {
     requestParams.include = [
       "id",
       "title",
+      "organization",
       "created_by",
       "created_at",
       "color",
@@ -130,6 +139,7 @@ export const ProjectsPage = () => {
               totalItems={totalItems}
               loadNextPage={loadNextPage}
               pageSize={defaultPageSize}
+              orgMap={orgMap}
             />
           ) : (
             <EmptyProjectsList openModal={openModal} />

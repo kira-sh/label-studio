@@ -139,7 +139,7 @@ class OrganizationMemberListAPI(generics.ListAPIView):
         members = self.paginated_members
         user_ids = [member.user_id for member in members]
         projects = (
-            Project.objects.filter(created_by_id__in=user_ids, organization=self.request.user.active_organization)
+            Project.objects.filter(created_by_id__in=user_ids, organization_id=self.kwargs[self.lookup_field])
             .values('created_by_id', 'id', 'title')
             .distinct()
         )
@@ -156,7 +156,7 @@ class OrganizationMemberListAPI(generics.ListAPIView):
     def _get_contributed_to_projects_map(self):
         members = self.paginated_members
         user_ids = [member.user_id for member in members]
-        org_project_ids = Project.objects.filter(organization=self.request.user.active_organization).values_list(
+        org_project_ids = Project.objects.filter(organization_id=self.kwargs[self.lookup_field]).values_list(
             'id', flat=True
         )
         annotations = (
@@ -302,8 +302,8 @@ class OrganizationMemberDetailAPI(GetParentObjectMixin, generics.RetrieveDestroy
 
     def delete(self, request, pk=None, user_pk=None):
         org = self.parent_object
-        if org != request.user.active_organization:
-            raise PermissionDenied('You can delete members only for your current active organization')
+        if not request.user.organizations.filter(pk=org.pk).exists():
+            raise PermissionDenied('You can delete members only for an organization you belong to')
 
         user = get_object_or_404(User, pk=user_pk)
         member = get_object_or_404(OrganizationMember, user=user, organization=org)

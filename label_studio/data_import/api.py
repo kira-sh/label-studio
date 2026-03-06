@@ -274,7 +274,7 @@ class ImportAPI(generics.CreateAPIView):
         task_instances = serializer.save(project_id=self.kwargs['pk'])
         project = generics.get_object_or_404(Project.objects.for_user(self.request.user), pk=self.kwargs['pk'])
         emit_webhooks_for_instance(
-            self.request.user.active_organization, project, WebhookAction.TASKS_CREATED, task_instances
+            project.organization, project, WebhookAction.TASKS_CREATED, task_instances
         )
         return task_instances, serializer
 
@@ -413,7 +413,7 @@ class ImportAPI(generics.CreateAPIView):
             queue_name='high',
             on_failure=set_import_background_failure,
             project_id=project.id,
-            organization_id=request.user.active_organization.id,
+            organization_id=project.organization_id,
         )
 
         response = {'import': project_import.id}
@@ -739,7 +739,7 @@ class ReImportAPI(ImportAPI):
 
         if settings.VERSION_EDITION != 'Community':
             return self.async_reimport(
-                project, file_upload_ids, files_as_tasks_list, request.user.active_organization_id
+                project, file_upload_ids, files_as_tasks_list, project.organization_id
             )
         else:
             return self.sync_reimport(project, file_upload_ids, files_as_tasks_list)
@@ -989,7 +989,7 @@ class DownloadStorageData(APIView):
                 file_obj = file_upload.file
         elif filepath.startswith(settings.AVATAR_PATH):
             user = User.objects.filter(avatar=filepath).first()
-            if user is not None and request.user.active_organization.has_user(user):
+            if user is not None and request.user.organizations.filter(organizationmember__user=user, organizationmember__deleted_at__isnull=True).exists():
                 file_obj = user.avatar
 
         if file_obj is None:

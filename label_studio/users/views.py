@@ -129,10 +129,6 @@ def user_login(request):
                 request.session['keep_me_logged_in'] = False
                 request.session.set_expiry(0)
 
-            # user is organization member
-            org_pk = Organization.find_by_user(user).pk
-            user.active_organization_id = org_pk
-            user.save(update_fields=['active_organization'])
             return redirect(next_page)
 
     if flag_set('fflag_feat_front_lsdv_e_297_increase_oss_to_enterprise_adoption_short'):

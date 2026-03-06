@@ -17,7 +17,7 @@ import { Input, TextArea } from "../../components/Form";
 import { FF_LSDV_E_297, isFF } from "../../utils/feature-flags";
 import { createURL } from "../../components/HeidiTips/utils";
 
-const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, setDescription, show = true }) =>
+const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, setDescription, orgs, orgId, setOrgId, show = true }) =>
   !show ? null : (
     <form
       className={cn("project-name").toClassName()}
@@ -55,6 +55,20 @@ const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, 
           className="project-description w-full"
         />
       </div>
+      {orgs && orgs.length > 1 && (
+        <div className="w-full flex flex-col gap-2">
+          <label className="w-full" htmlFor="project_organization">
+            Organization
+          </label>
+          <Select
+            id="project_organization"
+            value={orgId ? String(orgId) : ""}
+            onChange={(value) => setOrgId(Number(value))}
+            options={orgs.map((o) => ({ value: String(o.id), label: o.title }))}
+            triggerClassName="!flex-1"
+          />
+        </div>
+      )}
       {isFF(FF_LSDV_E_297) && (
         <div className="w-full flex flex-col gap-2">
           <label>
@@ -97,6 +111,16 @@ export const CreateProject = ({ onClose }) => {
   const [error, setError] = React.useState();
   const [description, setDescription] = React.useState("");
   const [sample, setSample] = React.useState(null);
+  const [orgs, setOrgs] = React.useState([]);
+  const [orgId, setOrgId] = React.useState(null);
+
+  React.useEffect(() => {
+    api.callApi("organizations").then((data) => {
+      const list = data?.results ?? data ?? [];
+      setOrgs(list);
+      if (list.length > 0 && !orgId) setOrgId(list[0].id);
+    });
+  }, []);
 
   const setStep = React.useCallback((step) => {
     _setStep(step);
@@ -133,8 +157,9 @@ export const CreateProject = ({ onClose }) => {
       title: name,
       description,
       label_config: project?.label_config ?? "<View></View>",
+      ...(orgId ? { organization: orgId } : {}),
     }),
-    [name, description, project?.label_config],
+    [name, description, project?.label_config, orgId],
   );
 
   const onCreate = React.useCallback(async () => {
@@ -232,6 +257,9 @@ export const CreateProject = ({ onClose }) => {
           onSubmit={onCreate}
           description={description}
           setDescription={setDescription}
+          orgs={orgs}
+          orgId={orgId}
+          setOrgId={setOrgId}
           show={step === "name"}
         />
         <ImportPage
