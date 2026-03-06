@@ -78,6 +78,11 @@ docker-compose.override.yml
 # actions-hub
 .github/actions-hub
 
+# Thumbtack: ignore dot-folders at repo root
+.cursor/
+.devcontainer/
+.github/
+
 # Local Netlify folder
 .netlify
 
