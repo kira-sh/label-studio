@@ -67,7 +67,7 @@ class JWTSettingsAPI(CreateAPIView):
     )
 
     def get_object(self):
-        jwt = self.request.user.active_organization.jwt
+        jwt = self.request.user.organizations.first().jwt
         self.check_object_permissions(self.request, jwt)
         return jwt
 

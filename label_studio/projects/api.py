@@ -176,9 +176,13 @@ class ProjectListAPI(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
         filter = serializer.validated_data.get('filter')
-        projects = Project.objects.filter(organization=self.request.user.active_organization).order_by(
+        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
+        projects = Project.objects.filter(organization__in=user_org_ids).order_by(
             F('pinned_at').desc(nulls_last=True), '-created_at'
         )
+        organization_id = self.request.query_params.get('organization_id')
+        if organization_id and int(organization_id) in list(user_org_ids):
+            projects = projects.filter(organization_id=organization_id)
         if filter in ['pinned_only', 'exclude_pinned']:
             projects = projects.filter(pinned_at__isnull=filter == 'exclude_pinned')
         projects = ProjectManager.with_counts_annotate(projects, fields=fields)
@@ -198,7 +202,14 @@ class ProjectListAPI(generics.ListCreateAPIView):
 
     def perform_create(self, ser):
         try:
-            ser.save(organization=self.request.user.active_organization)
+            org_id = self.request.data.get('organization')
+            user_org_ids = list(self.request.user.organizations.values_list('id', flat=True))
+            if org_id and int(org_id) in user_org_ids:
+                from organizations.models import Organization
+                organization = Organization.objects.get(pk=org_id)
+            else:
+                organization = self.request.user.active_organization or self.request.user.organizations.first()
+            ser.save(organization=organization)
         except IntegrityError as e:
             if str(e) == 'UNIQUE constraint failed: project.title, project.created_by_id':
                 raise ProjectExistException(
@@ -243,8 +254,9 @@ class ProjectCountsListAPI(generics.ListAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
+        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
         projects = Project.objects.with_counts(fields=fields).filter(
-            organization=self.request.user.active_organization
+            organization__in=user_org_ids
         )
 
         # Only annotate FSM state for UI/API consumption when both feature flags are enabled
@@ -377,8 +389,9 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
+        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
         projects = Project.objects.with_counts(fields=fields).filter(
-            organization=self.request.user.active_organization
+            organization__in=user_org_ids
         )
 
         # Only annotate FSM state for UI/API consumption when both feature flags are enabled
@@ -590,7 +603,7 @@ class ProjectSummaryResetAPI(GetParentObjectMixin, generics.CreateAPIView):
             recalculate_created_annotations_and_labels_from_scratch,
             project,
             summary,
-            organization_id=self.request.user.active_organization.id,
+            organization_id=project.organization_id,
         )
         return Response(status=status.HTTP_200_OK)
 
@@ -754,7 +767,7 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView, gener
         Task.delete_tasks_without_signals(Task.objects.filter(project=project))
         logger.info(f'calling reset project_id={project.id} ProjectTaskListAPI.delete()')
         project.summary.reset()
-        emit_webhooks_for_instance(request.user.active_organization, None, WebhookAction.TASKS_DELETED, task_ids)
+        emit_webhooks_for_instance(project.organization, None, WebhookAction.TASKS_DELETED, task_ids)
         return Response(status=204)
 
     def get(self, *args, **kwargs):
@@ -773,7 +786,7 @@ class ProjectTaskListAPI(GetParentObjectMixin, generics.ListCreateAPIView, gener
         project = self.parent_object
         instance = serializer.save(project=project)
         emit_webhooks_for_instance(
-            self.request.user.active_organization, project, WebhookAction.TASKS_CREATED, [instance]
+            project.organization, project, WebhookAction.TASKS_CREATED, [instance]
         )
         return instance
 
@@ -856,7 +869,8 @@ class ProjectModelVersions(generics.RetrieveAPIView):
     permission_required = all_permissions.projects_view
 
     def get_queryset(self):
-        return Project.objects.filter(organization=self.request.user.active_organization)
+        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
+        return Project.objects.filter(organization__in=user_org_ids)
 
     def get(self, request, *args, **kwargs):
         project = self.get_object()

@@ -14,6 +14,15 @@ from users.models import User
 class UserAdminShort(UserAdmin):
     add_fieldsets = ((None, {'fields': ('email', 'password1', 'password2')}),)
 
+    def get_all_organizations(self, obj):
+        orgs = Organization.objects.filter(
+            organizationmember__user=obj,
+            organizationmember__deleted_at__isnull=True,
+        ).values_list('title', flat=True)
+        return ', '.join(orgs) if orgs else '-'
+
+    get_all_organizations.short_description = 'Organizations'
+
     def __init__(self, *args, **kwargs):
         super(UserAdminShort, self).__init__(*args, **kwargs)
 
@@ -21,7 +30,7 @@ class UserAdminShort(UserAdmin):
             'email',
             'username',
             'active_organization',
-            'organization',
+            'get_all_organizations',
             'is_staff',
             'is_superuser',
         )
@@ -31,7 +40,6 @@ class UserAdminShort(UserAdmin):
             'first_name',
             'last_name',
             'email',
-            'organization__title',
             'active_organization__title',
         )
         self.ordering = ('email',)
@@ -156,14 +164,44 @@ class OrganizationMemberAdmin(admin.ModelAdmin):
         self.ordering = ('id',)
 
 
+class ProjectAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'organization', 'created_by', 'created_at', 'is_draft')
+    list_filter = ('organization', 'is_draft')
+    search_fields = ('title', 'organization__title', 'created_by__email')
+    ordering = ('-created_at',)
+    autocomplete_fields = ('organization', 'created_by')
+
+    def get_changeform_initial_data(self, request):
+        # Pre-fill organization and created_by with the admin user's first org
+        org = Organization.objects.filter(
+            organizationmember__user=request.user,
+            organizationmember__deleted_at__isnull=True,
+        ).first()
+        return {
+            'organization': org,
+            'created_by': request.user,
+            'label_config': '<View></View>',
+        }
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            if not obj.created_by_id:
+                obj.created_by = request.user
+            if not obj.organization_id:
+                obj.organization = Organization.objects.filter(
+                    organizationmember__user=request.user,
+                    organizationmember__deleted_at__isnull=True,
+                ).first()
+        super().save_model(request, obj, form, change)
+
+
 admin.site.register(User, UserAdminShort)
-admin.site.register(Project)
+admin.site.register(Project, ProjectAdmin)
 admin.site.register(MLBackend)
 admin.site.register(MLBackendTrainJob)
 admin.site.register(Task)
 admin.site.register(Annotation)
 admin.site.register(Prediction)
-admin.site.register(Organization)
 admin.site.register(OrganizationMember, OrganizationMemberAdmin)
 admin.site.register(AsyncMigrationStatus, AsyncMigrationStatusAdmin)
 

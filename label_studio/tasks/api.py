@@ -186,7 +186,7 @@ class TaskListAPI(DMTaskListAPI):
 
     def filter_queryset(self, queryset):
         queryset = super().filter_queryset(queryset)
-        return queryset.filter(project__organization=self.request.user.active_organization)
+        return queryset.filter(project__organization__in=self.request.user.organizations.values_list('id', flat=True))
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
@@ -200,7 +200,7 @@ class TaskListAPI(DMTaskListAPI):
         project = generics.get_object_or_404(Project, pk=project_id)
         instance = serializer.save(project=project)
         emit_webhooks_for_instance(
-            self.request.user.active_organization, project, WebhookAction.TASKS_CREATED, [instance]
+            project.organization, project, WebhookAction.TASKS_CREATED, [instance]
         )
 
 
@@ -384,7 +384,7 @@ class TaskAPI(generics.RetrieveUpdateDestroyAPIView):
         # First check permissions using a lightweight query
         # select_related('project') avoids extra query when permission check accesses task.project
         lean_task = generics.get_object_or_404(
-            Task.objects.filter(project__organization=self.request.user.active_organization).select_related('project'),
+            Task.objects.filter(project__organization__in=self.request.user.organizations.values_list('id', flat=True)).select_related('project'),
             pk=task_id,
         )
         self.check_object_permissions(self.request, lean_task)
@@ -1056,7 +1056,7 @@ class PredictionAPI(viewsets.ModelViewSet):
     filterset_fields = ['task', 'task__project', 'project']
 
     def get_queryset(self):
-        return Prediction.objects.filter(project__organization=self.request.user.active_organization)
+        return Prediction.objects.filter(project__organization__in=self.request.user.organizations.values_list('id', flat=True))
 
 
 @method_decorator(name='get', decorator=extend_schema(exclude=True))

@@ -11,6 +11,7 @@ export const API_CONFIG = {
     updateHotkeys: "PATCH:/current-user/hotkeys/",
 
     // Organization
+    organizations: "/organizations",
     memberships: "/organizations/:pk/memberships",
     userMemberships: "/organizations/:pk/memberships/:userPk",
     inviteLink: "/invite",

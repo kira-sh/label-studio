@@ -9,7 +9,7 @@ import { isDefined } from "../../../utils/helpers";
 import "./PeopleList.prefix.css";
 import { CopyableTooltip } from "../../../components/CopyableTooltip/CopyableTooltip";
 
-export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
+export const PeopleList = ({ onSelect, selectedUser, defaultSelected, orgId }) => {
   const api = useAPI();
   const [usersList, setUsersList] = useState();
   const [currentPage] = usePage("page", 1);
@@ -19,7 +19,7 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
   const fetchUsers = useCallback(async (page, pageSize) => {
     const response = await api.callApi("memberships", {
       params: {
-        pk: 1,
+        pk: orgId,
         contributed_to_projects: 1,
         page,
         page_size: pageSize,
@@ -44,8 +44,8 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected }) => {
   );
 
   useEffect(() => {
-    fetchUsers(currentPage, currentPageSize);
-  }, []);
+    if (orgId) fetchUsers(currentPage, currentPageSize);
+  }, [orgId]);
 
   useEffect(() => {
     if (isDefined(defaultSelected) && usersList) {

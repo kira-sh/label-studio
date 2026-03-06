@@ -67,13 +67,14 @@ class WebhookListAPI(generics.ListCreateAPIView):
     )
 
     def get_queryset(self):
-        return Webhook.objects.filter(organization=self.request.user.active_organization)
+        return Webhook.objects.filter(organization__in=self.request.user.organizations.values_list('id', flat=True))
 
     def perform_create(self, serializer):
         project = serializer.validated_data.get('project')
-        if project is None or project.organization_id != self.request.user.active_organization.id:
+        user_org_ids = list(self.request.user.organizations.values_list('id', flat=True))
+        if project is None or project.organization_id not in user_org_ids:
             raise NotFound('Project not found.')
-        serializer.save(organization=self.request.user.active_organization)
+        serializer.save(organization=project.organization)
 
 
 @method_decorator(
@@ -141,7 +142,7 @@ class WebhookAPI(generics.RetrieveUpdateDestroyAPIView):
         return super().get_serializer_class()
 
     def get_queryset(self):
-        return Webhook.objects.filter(organization=self.request.user.active_organization)
+        return Webhook.objects.filter(organization__in=self.request.user.organizations.values_list('id', flat=True))
 
 
 @method_decorator(

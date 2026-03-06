@@ -11,12 +11,12 @@ import { ProjectStateChip } from "@humansignal/app-common";
 
 const DEFAULT_CARD_COLORS = ["#FFFFFF", "#FDFDFC"];
 
-export const ProjectsList = ({ projects, currentPage, totalItems, loadNextPage, pageSize }) => {
+export const ProjectsList = ({ projects, currentPage, totalItems, loadNextPage, pageSize, orgMap = {} }) => {
   return (
     <>
       <div className={cn("projects-page").elem("list").toClassName()}>
         {projects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
+          <ProjectCard key={project.id} project={project} orgName={orgMap[project.organization]} />
         ))}
       </div>
       <div className={cn("projects-page").elem("pages").toClassName()}>
@@ -52,7 +52,7 @@ export const EmptyProjectsList = ({ openModal }) => {
   );
 };
 
-const ProjectCard = ({ project }) => {
+const ProjectCard = ({ project, orgName }) => {
   const color = useMemo(() => {
     return DEFAULT_CARD_COLORS.includes(project.color) ? null : project.color;
   }, [project]);
@@ -116,6 +116,11 @@ const ProjectCard = ({ project }) => {
               </div>
             )}
           </div>
+          {orgName && (
+            <div style={{ fontSize: "0.75rem", fontWeight: "bold", color: "#1890ff", padding: "2px 0 4px" }}>
+              {orgName}
+            </div>
+          )}
           <div className={cn("project-card").elem("summary").toClassName()}>
             <div className={cn("project-card").elem("annotation").toClassName()}>
               <div className={cn("project-card").elem("total").toClassName()}>
