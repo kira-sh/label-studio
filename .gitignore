@@ -1,7 +1,15 @@
 node_modules
 *.pyc
+*.pyo
+*.pyd
 *.ipynb
 __pycache__
+
+# Django compilation artifacts
+staticfiles/
+*.mo
+celerybeat-schedule
+celerybeat.pid
 .local/
 
 # docs
