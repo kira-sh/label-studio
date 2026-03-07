@@ -171,13 +171,11 @@ def _create_user(input_args, config):
     user = User.objects.get(email=username)
     org = Organization.objects.first()
     if not org:
-        org = Organization.create_organization(
+        Organization.create_organization(
             created_by=user, title='Label Studio', legacy_api_tokens_enabled=input_args.enable_legacy_api_token
         )
     else:
         org.add_user(user)
-    user.active_organization = org
-    user.save(update_fields=['active_organization'])
 
     return user
 

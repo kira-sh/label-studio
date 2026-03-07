@@ -243,10 +243,6 @@ def resolve_organization_id(entity=None, user=None):
         elif hasattr(entity, 'task') and entity.task and hasattr(entity.task, 'project') and entity.task.project:
             organization_id = getattr(entity.task.project, 'organization_id', None)
 
-    # Fallback to user's active organization
-    if not organization_id and user and hasattr(user, 'active_organization') and user.active_organization:
-        organization_id = user.active_organization.id
-
     # Cache the result in current context if we found an organization_id
     if organization_id is not None:
         CurrentContext.set_organization_id(organization_id)

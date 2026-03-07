@@ -832,7 +832,7 @@ PUBLIC_API_DOCS = get_bool_env('PUBLIC_API_DOCS', False)
 DATA_MANAGER_FILTER_ALLOWLIST = list(
     set(
         get_env_list('DATA_MANAGER_FILTER_ALLOWLIST')
-        + ['updated_by__active_organization', 'annotations__completed_by']
+        + ['annotations__completed_by']
     )
 )
 

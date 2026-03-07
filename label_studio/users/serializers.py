@@ -12,7 +12,7 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
     # short form for user presentation
     initials = serializers.SerializerMethodField(default='?', read_only=True)
     avatar = serializers.SerializerMethodField(read_only=True)
-    active_organization_meta = serializers.SerializerMethodField(read_only=True)
+    organizations = serializers.SerializerMethodField(read_only=True)
     last_activity = serializers.DateTimeField(read_only=True, source='last_activity_cached')
 
     def get_avatar(self, instance):
@@ -21,18 +21,13 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
     def get_initials(self, instance):
         return instance.get_initials(self._is_deleted(instance))
 
-    def get_active_organization_meta(self, instance):
-        organization = instance.active_organization
-        if organization is None:
-            return {'title': '', 'email': ''}
-
-        title = organization.title
-        email = ''
-
-        if organization.created_by is not None and organization.created_by.email is not None:
-            email = organization.created_by.email
-
-        return {'title': title, 'email': email}
+    def get_organizations(self, instance):
+        return list(
+            instance.om_through
+            .filter(deleted_at__isnull=True)
+            .select_related('organization')
+            .values('organization__id', 'organization__title')
+        )
 
     def _is_deleted(self, instance):
         return not instance.is_active
@@ -63,8 +58,7 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
             'avatar',
             'initials',
             'phone',
-            'active_organization',
-            'active_organization_meta',
+            'organizations',
             'allow_newsletters',
             'date_joined',
             'is_active',

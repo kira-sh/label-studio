@@ -4,10 +4,12 @@ def get_user_repr(user):
         return {'key': str(user), 'custom': {'organization': None, 'organization_id': None}}
     user_data = {'email': user.email}
     user_data['key'] = user_data['email']
-    if user.active_organization is not None:
+    om = user.om_through.filter(deleted_at__isnull=True).select_related('organization__created_by').first()
+    if om is not None:
+        org = om.organization
         user_data['custom'] = {
-            'organization': user.active_organization.created_by.email,
-            'organization_id': user.active_organization.id,
+            'organization': org.created_by.email if org.created_by else None,
+            'organization_id': org.id,
         }
     else:
         user_data['custom'] = {'organization': None, 'organization_id': None}

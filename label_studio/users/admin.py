@@ -29,7 +29,6 @@ class UserAdminShort(UserAdmin):
         self.list_display = (
             'email',
             'username',
-            'active_organization',
             'get_all_organizations',
             'is_staff',
             'is_superuser',
@@ -40,7 +39,6 @@ class UserAdminShort(UserAdmin):
             'first_name',
             'last_name',
             'email',
-            'active_organization__title',
         )
         self.ordering = ('email',)
 

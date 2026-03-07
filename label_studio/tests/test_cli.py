@@ -12,13 +12,16 @@ def test_create_user():
     input_args = parse_input_args(['init', 'test', '--username', 'default@localhost', '--password', '12345678'])
     config = {}
     user = _create_user(input_args, config)
-    assert user.active_organization is not None
+    assert user.om_through.filter(deleted_at__isnull=True).exists()
 
 
 @pytest.mark.django_db
-def test_user_active_organization_counters():
+def test_user_organization_annotation_counters():
+    from organizations.models import Organization
+
     input_args = parse_input_args(['init', 'test', '--username', 'default@localhost', '--password', '12345678'])
     user = _create_user(input_args, {})
+    org = user.organizations.filter(organizationmember__deleted_at__isnull=True).first()
 
     project_config = dict(
         title='Test',
@@ -34,7 +37,7 @@ def test_user_active_organization_counters():
     )
 
     def make_test_project():
-        project = make_project(project_config, user, False, org=user.active_organization)
+        project = make_project(project_config, user, False, org=org)
         task1 = make_task({'data': {'location': 'London', 'text': 'text A'}}, project)
         task2 = make_task({'data': {'location': 'London', 'text': 'text A'}}, project)
         make_annotation({'result': [{'result': [{'r': 1}], 'ground_truth': True}], 'completed_by': user}, task1.id)
@@ -45,5 +48,6 @@ def test_user_active_organization_counters():
     make_test_project()
     make_test_project()
 
-    assert user.active_organization_annotations().count() == 9
-    assert user.active_organization_contributed_project_number() == 3
+    annotations = user.annotations.filter(project__organization=org)
+    assert annotations.count() == 9
+    assert annotations.values_list('project').distinct().count() == 3

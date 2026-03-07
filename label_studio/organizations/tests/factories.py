@@ -17,7 +17,4 @@ class OrganizationFactory(factory.django.DjangoModelFactory):
 
     @factory.post_generation
     def created_by_active_organization(self, create, extracted, **kwargs):
-        if not create or not self.created_by:
-            return
-        self.created_by.active_organization = self
-        self.created_by.save(update_fields=['active_organization'])
+        pass  # active_organization field removed; membership is tracked via OrganizationMember

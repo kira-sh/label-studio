@@ -161,7 +161,7 @@ def user_account(request, sub_path=None):
     """
     user = request.user
 
-    if user.active_organization is None and 'organization_pk' not in request.session:
+    if not user.om_through.filter(deleted_at__isnull=True).exists():
         return redirect(reverse('main'))
 
     form = forms.UserProfileForm(instance=user)

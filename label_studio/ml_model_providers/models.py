@@ -137,7 +137,7 @@ class ModelProviderConnection(models.Model):
     def has_permission(self, user):
         return (
             user.is_administrator or user.is_owner or user.is_manager
-        ) and user.active_organization_id == self.organization_id
+        ) and user.organizations.filter(pk=self.organization_id, organizationmember__deleted_at__isnull=True).exists()
 
     def update_budget_total_spent_from_predictions_meta(self, predictions_meta: List[PredictionMeta]):
         total_cost = sum(meta.total_cost or 0 for meta in predictions_meta)

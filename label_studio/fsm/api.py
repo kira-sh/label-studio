@@ -179,7 +179,7 @@ class FSMEntityTransitionAPI(FSMAPIMixin, generics.GenericAPIView):
                 transition_name=transition_name,
                 transition_data=transition_data,
                 user=request.user,
-                organization_id=getattr(request.user, 'active_organization_id', None),
+                organization_id=None,
             )
         except PydanticValidationError as e:
             # Pydantic schema validation errors from transition instantiation

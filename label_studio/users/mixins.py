@@ -10,6 +10,4 @@ class UserMixin:
         return False
 
     def has_permission(self, user):
-        return OrganizationMember.objects.filter(
-            user=user, organization=user.active_organization, deleted_at__isnull=True
-        ).exists()
+        return OrganizationMember.objects.filter(user=user, deleted_at__isnull=True).exists()

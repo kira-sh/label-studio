@@ -18,8 +18,6 @@ class TestSDKPredictionValidation:
         with django_db_blocker.unblock():
             self.user = UserFactory()
             self.organization = OrganizationFactory(created_by=self.user)
-            self.user.active_organization = self.organization
-            self.user.save()
 
             # Create a project with a comprehensive label configuration
             self.project = ProjectFactory(

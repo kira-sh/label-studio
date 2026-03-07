@@ -10,11 +10,7 @@ export type APIUser = {
   avatar: string | null;
   initials: string;
   phone: string;
-  active_organization: number;
-  active_organization_meta: {
-    title: string;
-    email: string;
-  };
+  organizations: Array<{ organization__id: number; organization__title: string }>;
   allow_newsletters: boolean;
   date_joined: string;
   permissions?: Ability[];

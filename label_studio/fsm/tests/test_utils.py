@@ -482,15 +482,11 @@ class TestResolveOrganizationIdCoverage(TestCase):
         result = resolve_organization_id(entity=mock_entity)
         assert result == 321
 
-    def test_resolve_organization_id_from_user_active_organization(self):
-        """Test resolve_organization_id from user.active_organization"""
+    def test_resolve_organization_id_returns_none_without_entity_org(self):
+        """Test resolve_organization_id returns None when entity has no org context"""
         from fsm.utils import resolve_organization_id
 
-        mock_active_org = Mock()
-        mock_active_org.id = 654
-
         mock_user = Mock()
-        mock_user.active_organization = mock_active_org
 
         mock_entity = Mock()
         mock_entity.organization_id = None
@@ -498,7 +494,7 @@ class TestResolveOrganizationIdCoverage(TestCase):
         mock_entity.task = None
 
         result = resolve_organization_id(entity=mock_entity, user=mock_user)
-        assert result == 654
+        assert result is None
 
     def test_resolve_organization_id_caches_result(self):
         """Test that resolve_organization_id caches the result in CurrentContext"""

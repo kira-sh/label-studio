@@ -44,9 +44,6 @@ urlpatterns = [
     # TODO: temporary route, remove as needed
     path('models/', views.simple_view, name='models'),
     path('api/organizations/', include((_api_urlpattens, app_name), namespace='api')),
-    # invite
-    path('api/invite', api.OrganizationInviteAPI.as_view(), name='organization-invite'),
-    path('api/invite/reset-token', api.OrganizationResetTokenAPI.as_view(), name='organization-reset-token'),
     path('api/organizations/<int:pk>/invite', api.OrganizationInviteByOrgAPI.as_view(), name='organization-invite-by-org'),
     path('api/organizations/<int:pk>/invite/reset-token', api.OrganizationResetTokenByOrgAPI.as_view(), name='organization-reset-token-by-org'),
 ]

@@ -24,7 +24,7 @@ class Label(models.Model):
     organization = models.ForeignKey('organizations.Organization', related_name='labels', on_delete=models.CASCADE)
 
     def has_permission(self, user):
-        return self.organization_id == user.active_organization_id
+        return user.organizations.filter(pk=self.organization_id, organizationmember__deleted_at__isnull=True).exists()
 
     class Meta:
         constraints = [models.UniqueConstraint(fields=['title', 'organization'], name='unique_title')]

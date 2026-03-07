@@ -510,8 +510,6 @@ def setup_project(client, project_template, do_auth=True, legacy_api_tokens_enab
     if legacy_api_tokens_enabled:
         org.jwt.legacy_api_tokens_enabled = True
         org.jwt.save()
-    user.active_organization = org
-    user.save()
 
     if do_auth:
         assert signin(client, email, password).status_code == 302

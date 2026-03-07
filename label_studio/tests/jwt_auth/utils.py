@@ -9,6 +9,4 @@ def create_user_with_token_settings(api_tokens_enabled: bool, legacy_api_tokens_
     org.jwt.api_tokens_enabled = api_tokens_enabled
     org.jwt.legacy_api_tokens_enabled = legacy_api_tokens_enabled
     org.jwt.save()
-    user.active_organization = org
-    user.save()
     return user

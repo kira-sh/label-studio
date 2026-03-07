@@ -104,11 +104,6 @@ def _capture_context() -> dict:
     if org_id := CurrentContext.get_organization_id():
         context_data['organization_id'] = org_id
 
-    # If organization_id is not set, try to get it from the user, this ensures that we have an organization_id for the job
-    # And it prefers the original requesting user's organization_id over the current active organization_id of the user which could change during async jobs
-    if not org_id and user and hasattr(user, 'active_organization_id') and user.active_organization_id:
-        context_data['organization_id'] = user.active_organization_id
-
     # Get any custom context values (exclude non-serializable objects)
     job_data = CurrentContext.get_job_data()
     for key, value in job_data.items():
