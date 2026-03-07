@@ -314,8 +314,10 @@ class OrganizationMemberDetailAPI(GetParentObjectMixin, generics.RetrieveDestroy
 
     def delete(self, request, pk=None, user_pk=None):
         org = self.parent_object
-        if not request.user.active_organizations.filter(pk=org.pk).exists():
-            raise PermissionDenied('You can delete members only for an organization you belong to')
+        if not OrganizationMember.objects.filter(
+            user=request.user, organization=org, is_admin=True, deleted_at__isnull=True
+        ).exists():
+            raise PermissionDenied('Only organization admins can remove members.')
 
         user = get_object_or_404(User, pk=user_pk)
         member = get_object_or_404(OrganizationMember, user=user, organization=org)
@@ -416,8 +418,10 @@ class OrganizationAddMemberAPI(APIView):
 
     def post(self, request, pk):
         org = get_object_or_404(Organization, pk=pk)
-        if not org.has_permission(request.user):
-            raise PermissionDenied('You do not have access to this organization.')
+        if not OrganizationMember.objects.filter(
+            user=request.user, organization=org, is_admin=True, deleted_at__isnull=True
+        ).exists():
+            raise PermissionDenied('Only organization admins can add members.')
 
         user_id = request.data.get('user_id')
         email = request.data.get('email', '').strip()
