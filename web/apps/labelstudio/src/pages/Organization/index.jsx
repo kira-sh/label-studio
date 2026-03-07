@@ -3,16 +3,22 @@ import { Spinner } from "../../components/Spinner/Spinner";
 import { useAPI } from "../../providers/ApiProvider";
 import { useUpdatePageTitle } from "@humansignal/core";
 import { PeopleList } from "./PeoplePage/PeopleList";
+import { CreateProject } from "../CreateProject/CreateProject";
 import { cn } from "../../utils/bem";
 
 const OrgCard = ({ org }) => {
   const api = useAPI();
   const [projects, setProjects] = useState([]);
+  const [createOpen, setCreateOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchProjects = useCallback(() => {
     api.callApi("projects", { params: { organization_id: org.id, page_size: 100, include: "id,title" } })
       .then((data) => setProjects(data?.results ?? []));
   }, [org.id]);
+
+  useEffect(() => {
+    fetchProjects();
+  }, [fetchProjects]);
 
   return (
     <div style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 24, marginBottom: 24 }}>
@@ -23,7 +29,22 @@ const OrgCard = ({ org }) => {
           <PeopleList orgId={org.id} />
         </div>
         <div style={{ flex: 1 }}>
-          <h3 style={{ marginTop: 0 }}>Projects</h3>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <h3 style={{ margin: 0 }}>Projects</h3>
+            <button
+              onClick={() => setCreateOpen(true)}
+              style={{
+                fontSize: 12,
+                padding: "3px 10px",
+                borderRadius: 4,
+                border: "1px solid #ccc",
+                background: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              + New Project
+            </button>
+          </div>
           {projects.length === 0 ? (
             <p style={{ color: "#888" }}>No projects</p>
           ) : (
@@ -37,6 +58,15 @@ const OrgCard = ({ org }) => {
           )}
         </div>
       </div>
+      {createOpen && (
+        <CreateProject
+          defaultOrgId={org.id}
+          onClose={() => {
+            setCreateOpen(false);
+            fetchProjects();
+          }}
+        />
+      )}
     </div>
   );
 };

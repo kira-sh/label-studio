@@ -1,4 +1,4 @@
-import { IconExternal, IconFolderAdd, IconHumanSignal, IconUserAdd, IconFolderOpen } from "@humansignal/icons";
+import { IconExternal, IconHumanSignal, IconUserAdd, IconFolderOpen } from "@humansignal/icons";
 import { Button, SimpleCard, Spinner, Tooltip, Typography } from "@humansignal/ui";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
@@ -7,11 +7,9 @@ import { useUpdatePageTitle } from "@humansignal/core";
 import { useAtom, useAtomValue, useSetAtom } from "jotai";
 import { HeidiTips } from "../../components/HeidiTips/HeidiTips";
 import { useAPI } from "../../providers/ApiProvider";
-import { CreateProject } from "../CreateProject/CreateProject";
 import { InviteLink } from "../Organization/PeoplePage/InviteLink";
 import type { Page } from "../types/Page";
 import {
-  creationDialogOpen,
   invitationOpen,
   locationKeyAtom,
   PROJECTS_TO_SHOW,
@@ -45,11 +43,6 @@ const resources = [
 
 const actions = [
   {
-    title: "Create Project",
-    icon: IconFolderAdd,
-    type: "createProject",
-  },
-  {
     title: "Invite Members",
     icon: IconUserAdd,
     type: "inviteMembers",
@@ -61,7 +54,6 @@ type Action = (typeof actions)[number]["type"];
 export const HomePage: Page = () => {
   const api = useAPI();
   const location = useLocation();
-  const [modalIsOpen, setModalIsOpen] = useAtom(creationDialogOpen);
   const [invitationIsOpen, setInvitationIsOpen] = useAtom(invitationOpen);
   const setLocationKey = useSetAtom(locationKeyAtom);
   const setProjectsData = useSetAtom(projectsDataAtom);
@@ -120,9 +112,6 @@ export const HomePage: Page = () => {
   const handleActions = (action: Action) => {
     return () => {
       switch (action) {
-        case "createProject":
-          setModalIsOpen(true);
-          break;
         case "inviteMembers":
           setInvitationIsOpen(true);
           break;
@@ -187,14 +176,14 @@ export const HomePage: Page = () => {
                   <IconFolderOpen />
                 </div>
                 <Typography variant="headline" size="small">
-                  Create your first project
+                  No projects yet
                 </Typography>
                 <Typography size="small" className="text-neutral-content-subtler">
-                  Import your data and set up the labeling interface to start annotating
+                  Create a project from the Organization page
                 </Typography>
-                <Button className="mt-4" onClick={() => setModalIsOpen(true)} aria-label="Create new project">
-                  Create Project
-                </Button>
+                <Link to="/organization" className="mt-4">
+                  <Button aria-label="Go to organization page">Go to Organization</Button>
+                </Link>
               </div>
             ) : isSuccess && data && sortedProjects.length > 0 ? (
               <div className="flex flex-col gap-1">
@@ -232,7 +221,6 @@ export const HomePage: Page = () => {
           </div>
         </section>
       </div>
-      {modalIsOpen && <CreateProject onClose={() => setModalIsOpen(false)} />}
       <InviteLink opened={invitationIsOpen} onClosed={() => setInvitationIsOpen(false)} />
     </main>
   );

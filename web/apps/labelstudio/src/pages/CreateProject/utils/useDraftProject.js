@@ -3,7 +3,7 @@ import { useAtom } from "jotai";
 import React, { useEffect } from "react";
 import { useAPI } from "../../../providers/ApiProvider";
 
-export const useDraftProject = () => {
+export const useDraftProject = (orgId) => {
   const api = useAPI();
   const [project, setProject] = useAtom(projectAtom);
 
@@ -22,15 +22,13 @@ export const useDraftProject = () => {
       projectName = `New Project #${projectNumber}`;
     }
 
-    const draft = await api.callApi("createProject", {
-      body: {
-        title: projectName,
-        is_draft: true,
-      },
-    });
+    const body = { title: projectName, is_draft: true };
+    if (orgId) body.organization = orgId;
+
+    const draft = await api.callApi("createProject", { body });
 
     if (draft) setProject(draft);
-  }, []);
+  }, [orgId]);
 
   useEffect(() => {
     fetchDraftProject();

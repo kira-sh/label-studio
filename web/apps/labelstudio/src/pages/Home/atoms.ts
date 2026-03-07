@@ -49,5 +49,4 @@ export const sortedProjectsAtom = atom((get) => {
   return [...visitedProjects, ...nonVisitedProjects].slice(0, PROJECTS_TO_SHOW);
 });
 
-export const creationDialogOpen = atom(false);
 export const invitationOpen = atom(false);
