@@ -99,11 +99,11 @@ const ProjectName = ({ name, setName, onSaveName, onSubmit, error, description, 
     </form>
   );
 
-export const CreateProject = ({ onClose }) => {
+export const CreateProject = ({ onClose, defaultOrgId }) => {
   const [step, _setStep] = React.useState("name"); // name | import | config
   const [waiting, setWaitingStatus] = React.useState(false);
 
-  const { project, setProject: updateProject } = useDraftProject();
+  const { project, setProject: updateProject } = useDraftProject(defaultOrgId);
   const history = useHistory();
   const api = useAPI();
 
@@ -118,7 +118,10 @@ export const CreateProject = ({ onClose }) => {
     api.callApi("organizations").then((data) => {
       const list = data?.results ?? data ?? [];
       setOrgs(list);
-      if (list.length > 0 && !orgId) setOrgId(list[0].id);
+      if (!orgId) {
+        const preferred = defaultOrgId && list.find((o) => o.id === defaultOrgId);
+        setOrgId(preferred ? preferred.id : list[0]?.id ?? null);
+      }
     });
   }, []);
 
