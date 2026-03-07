@@ -134,7 +134,7 @@ class Organization(OrganizationMixin, models.Model):
         ).exists()
 
     def has_user(self, user):
-        return self.users.filter(pk=user.pk).exists()
+        return OrganizationMember.objects.filter(user=user, organization=self, deleted_at__isnull=True).exists()
 
     def has_deleted(self, user):
         return OrganizationMember.objects.filter(user=user, organization=self, deleted_at__isnull=False).exists()
@@ -146,9 +146,15 @@ class Organization(OrganizationMixin, models.Model):
         return OrganizationMember.objects.filter(user=user, organization=self, deleted_at__isnull=True).exists()
 
     def add_user(self, user):
-        if self.users.filter(pk=user.pk).exists():
-            logger.debug('User already exists in organization.')
-            return
+        # Restore a soft-deleted membership if one exists
+        existing = OrganizationMember.objects.filter(user=user, organization=self).first()
+        if existing:
+            if existing.deleted_at is None:
+                logger.debug('User already exists in organization.')
+                return existing
+            existing.deleted_at = None
+            existing.save(update_fields=['deleted_at'])
+            return existing
 
         with transaction.atomic():
             om = OrganizationMember(user=user, organization=self)
