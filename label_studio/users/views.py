@@ -38,7 +38,7 @@ def logout(request):
 
 @enforce_csrf_checks
 def user_signup(request):
-    """Sign up page"""
+    """Sign up page — only accessible via a valid invite token."""
     user = request.user
     next_page = request.GET.get('next')
     token = request.GET.get('token')
@@ -50,22 +50,20 @@ def user_signup(request):
         else:
             next_page = reverse('projects:project-index')
 
-    user_form = forms.UserSignupForm()
-    organization_form = OrganizationSignupForm()
-
     if user.is_authenticated:
         return redirect(next_page)
 
+    # Always require a valid invite token — block access to the signup page
+    # regardless of HTTP method when no valid token is present.
+    organization = Organization.objects.first()
+    if not (token and organization and token == organization.token):
+        raise PermissionDenied()
+
+    user_form = forms.UserSignupForm()
+    organization_form = OrganizationSignupForm()
+
     # make a new user
     if request.method == 'POST':
-        organization = Organization.objects.first()
-        if settings.DISABLE_SIGNUP_WITHOUT_LINK is True:
-            if not (token and organization and token == organization.token):
-                raise PermissionDenied()
-        else:
-            if token and organization and token != organization.token:
-                raise PermissionDenied()
-
         user_form = forms.UserSignupForm(request.POST)
         organization_form = OrganizationSignupForm(request.POST)
 
