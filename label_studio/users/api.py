@@ -179,7 +179,7 @@ class UserAPI(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_queryset(self):
-        qs = User.objects.filter(organizations__in=self.request.user.organizations.all()).distinct()
+        qs = User.objects.filter(organizations__in=self.request.user.active_organizations.all()).distinct()
         search = self.request.query_params.get('search', '').strip()
         if search:
             qs = qs.filter(email__icontains=search)
@@ -220,7 +220,7 @@ class UserAPI(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         instance = serializer.save()
-        first_org = self.request.user.organizations.first()
+        first_org = self.request.user.active_organizations.first()
         if first_org:
             first_org.add_user(instance)
 

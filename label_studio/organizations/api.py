@@ -191,7 +191,7 @@ class OrganizationMemberListAPI(generics.ListAPIView):
         }
 
     def get_queryset(self):
-        org = generics.get_object_or_404(self.request.user.organizations, pk=self.kwargs[self.lookup_field])
+        org = generics.get_object_or_404(self.request.user.active_organizations, pk=self.kwargs[self.lookup_field])
         if flag_set('fix_backend_dev_3134_exclude_deactivated_users', self.request.user):
             serializer = OrganizationMemberListParamsSerializer(data=self.request.GET)
             serializer.is_valid(raise_exception=True)
@@ -302,7 +302,7 @@ class OrganizationMemberDetailAPI(GetParentObjectMixin, generics.RetrieveDestroy
 
     def delete(self, request, pk=None, user_pk=None):
         org = self.parent_object
-        if not request.user.organizations.filter(pk=org.pk).exists():
+        if not request.user.active_organizations.filter(pk=org.pk).exists():
             raise PermissionDenied('You can delete members only for an organization you belong to')
 
         user = get_object_or_404(User, pk=user_pk)
