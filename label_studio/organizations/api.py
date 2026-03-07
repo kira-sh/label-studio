@@ -418,3 +418,44 @@ class OrganizationResetTokenAPI(APIView):
         serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
         serializer.is_valid()
         return Response(serializer.data, status=201)
+
+
+class OrganizationMemberAdminAPI(GetParentObjectMixin, generics.GenericAPIView):
+    parent_queryset = Organization.objects.all()
+    permission_required = ViewClassPermission(
+        POST=all_permissions.organizations_change,
+        DELETE=all_permissions.organizations_change,
+    )
+
+    def _get_member(self, org, user_pk):
+        return get_object_or_404(OrganizationMember, organization=org, user_id=user_pk, deleted_at__isnull=True)
+
+    def _requester_is_admin(self, request, org):
+        return OrganizationMember.objects.filter(
+            user=request.user, organization=org, is_admin=True, deleted_at__isnull=True
+        ).exists()
+
+    def post(self, request, pk, user_pk):
+        org = self.parent_object
+        if not self._requester_is_admin(request, org):
+            raise PermissionDenied('Only admins can promote members.')
+        member = self._get_member(org, user_pk)
+        member.is_admin = True
+        member.save(update_fields=['is_admin'])
+        return Response({'is_admin': True}, status=status.HTTP_200_OK)
+
+    def delete(self, request, pk, user_pk):
+        org = self.parent_object
+        if not self._requester_is_admin(request, org):
+            raise PermissionDenied('Only admins can demote members.')
+        member = self._get_member(org, user_pk)
+        if member.user_id == org.created_by_id:
+            raise PermissionDenied('Cannot remove admin from the organization creator.')
+        admin_count = OrganizationMember.objects.filter(
+            organization=org, is_admin=True, deleted_at__isnull=True
+        ).count()
+        if admin_count <= 1:
+            raise PermissionDenied('Organization must have at least one admin.')
+        member.is_admin = False
+        member.save(update_fields=['is_admin'])
+        return Response({'is_admin': False}, status=status.HTTP_200_OK)

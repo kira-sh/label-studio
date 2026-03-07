@@ -159,7 +159,9 @@ class OrganizationMemberAdmin(admin.ModelAdmin):
     def __init__(self, *args, **kwargs):
         super(OrganizationMemberAdmin, self).__init__(*args, **kwargs)
 
-        self.list_display = ('id', 'user', 'organization', 'created_at', 'updated_at')
+        self.list_display = ('id', 'user', 'organization', 'is_admin', 'created_at', 'updated_at')
+        self.list_editable = ('is_admin',)
+        self.list_filter = ('is_admin',)
         self.search_fields = ('user__email', 'organization__title')
         self.ordering = ('id',)
 

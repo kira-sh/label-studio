@@ -5,8 +5,16 @@ from django.contrib import admin
 from .models import Organization, OrganizationMember
 
 
+class OrganizationMemberInline(admin.TabularInline):
+    model = OrganizationMember
+    extra = 0
+    fields = ('user', 'is_admin', 'deleted_at')
+    readonly_fields = ('deleted_at',)
+
+
 class OrganizationAdmin(admin.ModelAdmin):
     search_fields = ('title',)
+    inlines = [OrganizationMemberInline]
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
