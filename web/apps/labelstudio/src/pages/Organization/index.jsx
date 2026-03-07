@@ -4,12 +4,14 @@ import { useAPI } from "../../providers/ApiProvider";
 import { useUpdatePageTitle } from "@humansignal/core";
 import { PeopleList } from "./PeoplePage/PeopleList";
 import { CreateProject } from "../CreateProject/CreateProject";
+import { InviteLink } from "./PeoplePage/InviteLink";
 import { cn } from "../../utils/bem";
 
 const OrgCard = ({ org }) => {
   const api = useAPI();
   const [projects, setProjects] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const fetchProjects = useCallback(() => {
     api.callApi("projects", { params: { organization_id: org.id, page_size: 100, include: "id,title" } })
@@ -22,7 +24,22 @@ const OrgCard = ({ org }) => {
 
   return (
     <div style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 24, marginBottom: 24 }}>
-      <h2 style={{ marginTop: 0, marginBottom: 16 }}>{org.title}</h2>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+        <h2 style={{ margin: 0 }}>{org.title}</h2>
+        <button
+          onClick={() => setInviteOpen(true)}
+          style={{
+            fontSize: 12,
+            padding: "3px 10px",
+            borderRadius: 4,
+            border: "1px solid #ccc",
+            background: "#fff",
+            cursor: "pointer",
+          }}
+        >
+          Invite Members
+        </button>
+      </div>
       <div style={{ display: "flex", gap: 32 }}>
         <div style={{ flex: 1 }}>
           <h3 style={{ marginTop: 0 }}>Members</h3>
@@ -67,6 +84,11 @@ const OrgCard = ({ org }) => {
           }}
         />
       )}
+      <InviteLink
+        opened={inviteOpen}
+        orgId={org.id}
+        onClosed={() => setInviteOpen(false)}
+      />
     </div>
   );
 };
