@@ -5,6 +5,7 @@ import {
   IconFolder,
   IconHome,
   IconHotkeys,
+  IconHumanSignal,
   IconPeople,
   IconPersonInCircle,
   IconPin,
@@ -277,6 +278,10 @@ export const Menubar = ({ enabled, defaultOpened, defaultPinned, children, onSid
                 .toClassName()}
             >
               {children}
+              <footer className="flex gap-2 items-center px-6 py-3 mt-auto border-t border-neutral-border text-neutral-content-subtle text-sm">
+                <IconHumanSignal />
+                <span>Label Studio Version: Community</span>
+              </footer>
             </div>
           </MenubarContext.Provider>
         </div>
