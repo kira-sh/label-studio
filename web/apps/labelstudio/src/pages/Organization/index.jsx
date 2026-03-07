@@ -15,6 +15,11 @@ const OrgCard = ({ org }) => {
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [memberListKey, setMemberListKey] = useState(0);
 
+  const handleRemoveMember = useCallback(async (user) => {
+    await api.callApi("removeOrgMember", { params: { pk: org.id, userPk: user.id } });
+    setMemberListKey((k) => k + 1);
+  }, [org.id]);
+
   const fetchProjects = useCallback(() => {
     api.callApi("projects", { params: { organization_id: org.id, page_size: 100, include: "id,title" } })
       .then((data) => setProjects(data?.results ?? []));
@@ -40,7 +45,7 @@ const OrgCard = ({ org }) => {
       </div>
       <div className="flex gap-8">
         <div className="flex-1">
-          <PeopleList key={memberListKey} orgId={org.id} />
+          <PeopleList key={memberListKey} orgId={org.id} onRemove={handleRemoveMember} />
         </div>
         <div className="flex-1">
           <h3 className="m-0 mb-3 text-base font-medium">Projects</h3>
