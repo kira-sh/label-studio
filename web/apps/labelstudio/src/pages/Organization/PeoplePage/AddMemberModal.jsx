@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAPI } from "../../../providers/ApiProvider";
-import { Button } from "@humansignal/ui";
+import { API } from "../../../providers/ApiProvider";
+import { Button, Typography } from "@humansignal/ui";
 import { Space } from "@humansignal/ui/lib/space/space";
 import { Modal } from "../../../components/Modal/ModalPopup";
 import { Input } from "../../../components/Form";
 
+const TABS = ["existing", "new", "invite"];
+
 export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
   const api = useAPI();
   const modalRef = useRef();
-  const [tab, setTab] = useState("existing"); // "existing" | "new"
+  const [tab, setTab] = useState("existing");
 
   // Existing user state
   const [search, setSearch] = useState("");
@@ -21,21 +24,45 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // Invite link state
+  const [inviteLink, setInviteLink] = useState(null);
+  const [copied, setCopied] = useState(false);
+
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Show modal on mount
   useEffect(() => {
     modalRef.current?.show?.();
   }, []);
 
-  // Fetch current org members once so we can exclude them from search results
+  // Fetch current org members to exclude from search results
   useEffect(() => {
     api.callApi("memberships", { params: { pk: orgId, page_size: 1000 } }).then((data) => {
       const ids = new Set((data?.results ?? []).map((m) => m.user.id));
       setExistingMemberIds(ids);
     });
   }, [orgId]);
+
+  // Fetch invite link when switching to that tab
+  useEffect(() => {
+    if (tab === "invite" && !inviteLink) {
+      API.invoke("orgInviteLink", { pk: orgId }).then((result) => {
+        if (result?.invite_url) setInviteLink(location.origin + result.invite_url);
+      });
+    }
+  }, [tab, orgId]);
+
+  const handleResetLink = async () => {
+    const result = await API.invoke("resetOrgInviteLink", { pk: orgId });
+    if (result?.invite_url) setInviteLink(location.origin + result.invite_url);
+  };
+
+  const handleCopyLink = useCallback(() => {
+    if (!inviteLink) return;
+    navigator.clipboard.writeText(inviteLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }, [inviteLink]);
 
   const handleSearchKeyDown = useCallback(async (e) => {
     if (e.key !== "Enter") return;
@@ -74,11 +101,13 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
     (tab === "existing" && selectedUser) ||
     (tab === "new" && email && password);
 
+  const tabLabel = { existing: "Existing User", new: "New User", invite: "Invite Link" };
+
   const body = (
     <div className="flex flex-col gap-4">
       {/* Tabs */}
       <div className="flex gap-2">
-        {["existing", "new"].map((t) => (
+        {TABS.map((t) => (
           <Button
             key={t}
             look={tab === t ? "filled" : "outlined"}
@@ -86,12 +115,12 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
             onClick={() => { setTab(t); setError(null); }}
             style={{ flex: 1 }}
           >
-            {t === "existing" ? "Existing User" : "New User"}
+            {tabLabel[t]}
           </Button>
         ))}
       </div>
 
-      {tab === "existing" ? (
+      {tab === "existing" && (
         <div className="flex flex-col gap-3">
           <div>
             <label className="block mb-1 text-sm font-semibold text-neutral-content">Search users</label>
@@ -131,7 +160,9 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
             )}
           </div>
         </div>
-      ) : (
+      )}
+
+      {tab === "new" && (
         <div className="flex flex-col gap-3">
           <div>
             <label className="block mb-1 text-sm font-semibold text-neutral-content">Email</label>
@@ -157,6 +188,15 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
         </div>
       )}
 
+      {tab === "invite" && (
+        <div className="flex flex-col gap-3">
+          <Input value={inviteLink ?? "Loading…"} style={{ width: "100%" }} readOnly />
+          <Typography size="small" className="text-neutral-content-subtler">
+            Share this link to invite people to join this organization.
+          </Typography>
+        </div>
+      )}
+
       {error && (
         <p className="text-negative-content text-sm m-0">{error}</p>
       )}
@@ -165,18 +205,39 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
 
   const footer = (
     <Space spread>
-      <Space />
+      <Space>
+        {tab === "invite" && (
+          <Button
+            variant="negative"
+            look="outlined"
+            onClick={handleResetLink}
+            aria-label="Reset invite link"
+          >
+            Reset Link
+          </Button>
+        )}
+      </Space>
       <Space>
         <Button look="outlined" onClick={onClose} aria-label="Cancel">
           Cancel
         </Button>
-        <Button
-          onClick={handleSubmit}
-          disabled={!canSubmit || saving}
-          aria-label="Add member"
-        >
-          {saving ? "Adding…" : "Add Member"}
-        </Button>
+        {tab === "invite" ? (
+          <Button
+            variant={copied ? "positive" : "primary"}
+            onClick={handleCopyLink}
+            aria-label="Copy invite link"
+          >
+            {copied ? "Copied!" : "Copy Link"}
+          </Button>
+        ) : (
+          <Button
+            onClick={handleSubmit}
+            disabled={!canSubmit || saving}
+            aria-label="Add member"
+          >
+            {saving ? "Adding…" : "Add Member"}
+          </Button>
+        )}
       </Space>
     </Space>
   );
@@ -188,7 +249,7 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
       body={body}
       footer={footer}
       bareFooter
-      style={{ width: 460 }}
+      style={{ width: 480 }}
       onHide={onClose}
     />
   );

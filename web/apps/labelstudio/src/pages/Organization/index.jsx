@@ -4,16 +4,14 @@ import { useAPI } from "../../providers/ApiProvider";
 import { useUpdatePageTitle } from "@humansignal/core";
 import { PeopleList } from "./PeoplePage/PeopleList";
 import { CreateProject } from "../CreateProject/CreateProject";
-import { InviteLink } from "./PeoplePage/InviteLink";
 import { AddMemberModal } from "./PeoplePage/AddMemberModal";
 import { Button } from "@humansignal/ui";
-import { IconPlus, IconUserAdd, IconLink } from "@humansignal/icons";
+import { IconPlus, IconUserAdd } from "@humansignal/icons";
 
 const OrgCard = ({ org }) => {
   const api = useAPI();
   const [projects, setProjects] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
-  const [inviteOpen, setInviteOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [memberListKey, setMemberListKey] = useState(0);
 
@@ -33,44 +31,23 @@ const OrgCard = ({ org }) => {
         <Button
           look="outlined"
           size="small"
-          leading={<IconLink className="!h-4" />}
-          onClick={() => setInviteOpen(true)}
-          aria-label="Invite members"
+          leading={<IconUserAdd className="!h-4" />}
+          onClick={() => setAddMemberOpen(true)}
+          aria-label="Add member"
         >
-          Invite Members
+          Add Member
         </Button>
       </div>
       <div className="flex gap-8">
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <h3 className="m-0 text-base font-medium">Members</h3>
-            <Button
-              size="small"
-              leading={<IconUserAdd className="!h-4" />}
-              onClick={() => setAddMemberOpen(true)}
-              aria-label="Add member"
-            >
-              Add Member
-            </Button>
-          </div>
           <PeopleList key={memberListKey} orgId={org.id} />
         </div>
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-3">
-            <h3 className="m-0 text-base font-medium">Projects</h3>
-            <Button
-              size="small"
-              leading={<IconPlus className="!h-4" />}
-              onClick={() => setCreateOpen(true)}
-              aria-label="Create new project"
-            >
-              New Project
-            </Button>
-          </div>
+          <h3 className="m-0 mb-3 text-base font-medium">Projects</h3>
           {projects.length === 0 ? (
             <p className="text-neutral-content-subtler">No projects yet</p>
           ) : (
-            <ul className="pl-5 m-0">
+            <ul className="pl-5 m-0 mb-3">
               {projects.map((p) => (
                 <li key={p.id} className="mb-1">
                   <a href={`/projects/${p.id}/data`}>{p.title}</a>
@@ -78,6 +55,15 @@ const OrgCard = ({ org }) => {
               ))}
             </ul>
           )}
+          <Button
+            look="outlined"
+            size="small"
+            leading={<IconPlus className="!h-4" />}
+            onClick={() => setCreateOpen(true)}
+            aria-label="Create new project"
+          >
+            New Project
+          </Button>
         </div>
       </div>
       {createOpen && (
@@ -89,11 +75,6 @@ const OrgCard = ({ org }) => {
           }}
         />
       )}
-      <InviteLink
-        opened={inviteOpen}
-        orgId={org.id}
-        onClosed={() => setInviteOpen(false)}
-      />
       {addMemberOpen && (
         <AddMemberModal
           orgId={org.id}
