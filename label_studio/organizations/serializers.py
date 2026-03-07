@@ -12,9 +12,19 @@ from users.serializers import UserSerializer
 
 
 class OrganizationIdSerializer(DynamicFieldsMixin, serializers.ModelSerializer):
+    current_user_is_admin = serializers.SerializerMethodField(read_only=True)
+
+    def get_current_user_is_admin(self, org) -> bool:
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return False
+        return OrganizationMember.objects.filter(
+            user=request.user, organization=org, is_admin=True, deleted_at__isnull=True
+        ).exists()
+
     class Meta:
         model = Organization
-        fields = ['id', 'title', 'contact_info', 'created_at']
+        fields = ['id', 'title', 'contact_info', 'created_at', 'current_user_is_admin']
 
 
 class OrganizationSerializer(DynamicFieldsMixin, serializers.ModelSerializer):

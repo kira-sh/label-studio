@@ -202,13 +202,20 @@ class ProjectListAPI(generics.ListCreateAPIView):
 
     def perform_create(self, ser):
         try:
+            from organizations.models import Organization, OrganizationMember
+            from rest_framework.exceptions import PermissionDenied
             org_id = self.request.data.get('organization')
-            user_org_ids = list(self.request.user.active_organizations.values_list('id', flat=True))
-            if org_id and int(org_id) in user_org_ids:
-                from organizations.models import Organization
+            admin_org_ids = list(
+                OrganizationMember.objects.filter(
+                    user=self.request.user, is_admin=True, deleted_at__isnull=True
+                ).values_list('organization_id', flat=True)
+            )
+            if org_id and int(org_id) in admin_org_ids:
                 organization = Organization.objects.get(pk=org_id)
             else:
-                organization = self.request.user.active_organizations.first()
+                organization = Organization.objects.filter(pk__in=admin_org_ids).first()
+            if not organization:
+                raise PermissionDenied('Only organization admins can create projects.')
             ser.save(organization=organization)
         except IntegrityError as e:
             if str(e) == 'UNIQUE constraint failed: project.title, project.created_by_id':

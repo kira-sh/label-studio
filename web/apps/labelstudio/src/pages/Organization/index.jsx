@@ -10,6 +10,7 @@ import { IconPlus, IconUserAdd } from "@humansignal/icons";
 
 const OrgCard = ({ org }) => {
   const api = useAPI();
+  const isAdmin = org.current_user_is_admin;
   const [projects, setProjects] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
@@ -33,19 +34,21 @@ const OrgCard = ({ org }) => {
     <div className="border border-neutral-border rounded-lg p-6 mb-6">
       <div className="flex items-center gap-3 mb-4">
         <h2 className="m-0 text-xl font-semibold">{org.title}</h2>
-        <Button
-          look="outlined"
-          size="small"
-          leading={<IconUserAdd className="!h-4" />}
-          onClick={() => setAddMemberOpen(true)}
-          aria-label="Add member"
-        >
-          Add Member
-        </Button>
+        {isAdmin && (
+          <Button
+            look="outlined"
+            size="small"
+            leading={<IconUserAdd className="!h-4" />}
+            onClick={() => setAddMemberOpen(true)}
+            aria-label="Add member"
+          >
+            Add Member
+          </Button>
+        )}
       </div>
       <div className="flex gap-8">
         <div className="flex-1">
-          <PeopleList key={memberListKey} orgId={org.id} onRemove={handleRemoveMember} />
+          <PeopleList key={memberListKey} orgId={org.id} onRemove={isAdmin ? handleRemoveMember : undefined} />
         </div>
         <div className="flex-1">
           <h3 className="m-0 mb-3 text-base font-medium">Projects</h3>
@@ -60,15 +63,17 @@ const OrgCard = ({ org }) => {
               ))}
             </ul>
           )}
-          <Button
-            look="outlined"
-            size="small"
-            leading={<IconPlus className="!h-4" />}
-            onClick={() => setCreateOpen(true)}
-            aria-label="Create new project"
-          >
-            New Project
-          </Button>
+          {isAdmin && (
+            <Button
+              look="outlined"
+              size="small"
+              leading={<IconPlus className="!h-4" />}
+              onClick={() => setCreateOpen(true)}
+              aria-label="Create new project"
+            >
+              New Project
+            </Button>
+          )}
         </div>
       </div>
       {createOpen && (
