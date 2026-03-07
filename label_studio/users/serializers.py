@@ -35,29 +35,7 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
         return {'title': title, 'email': email}
 
     def _is_deleted(self, instance):
-        if 'user' in self.context:
-            org_id = self.context['user'].active_organization_id
-        elif 'request' in self.context:
-            org_id = self.context['request'].user.active_organization_id
-        else:
-            org_id = None
-
-        if not org_id:
-            return False
-
-        # Will use prefetched objects if available
-        organization_members = instance.om_through.all()
-        organization_member_for_user = next(
-            (
-                organization_member
-                for organization_member in organization_members
-                if organization_member.organization_id == org_id
-            ),
-            None,
-        )
-        if not organization_member_for_user:
-            return True
-        return bool(organization_member_for_user.deleted_at)
+        return not instance.is_active
 
     def to_representation(self, instance):
         """Returns user with cache, this helps to avoid multiple s3/gcs links resolving for avatars"""
@@ -69,10 +47,6 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
             self.context[key] = {}
         if uid not in self.context[key]:
             self.context[key][uid] = super().to_representation(instance)
-
-        if self._is_deleted(instance):
-            for field in ['username', 'first_name', 'last_name', 'email']:
-                self.context[key][uid][field] = 'User' if field == 'last_name' else 'Deleted'
 
         return self.context[key][uid]
 
@@ -93,6 +67,7 @@ class BaseUserSerializer(FlexFieldsModelSerializer):
             'active_organization_meta',
             'allow_newsletters',
             'date_joined',
+            'is_active',
         )
 
 
