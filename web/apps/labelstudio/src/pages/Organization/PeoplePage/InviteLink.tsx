@@ -3,31 +3,31 @@ import { Space } from "@humansignal/ui/lib/space/space";
 import { cn } from "apps/labelstudio/src/utils/bem";
 import { Modal } from "apps/labelstudio/src/components/Modal/ModalPopup";
 import { API } from "apps/labelstudio/src/providers/ApiProvider";
-import { useAtomValue } from "jotai";
-import { atomWithQuery } from "jotai-tanstack-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Input } from "../../../components/Form";
 
-const linkAtom = atomWithQuery(() => ({
-  queryKey: ["invite-link"],
-  async queryFn() {
-    // called only once when the component is rendered on page reload
-    // will also be reset when called `refetch()` on the Reset button
-    const result = await API.invoke("resetInviteLink");
-    return location.origin + result.invite_url;
-  },
-}));
-
 export function InviteLink({
   opened,
+  orgId,
   onOpened,
   onClosed,
 }: {
   opened: boolean;
+  orgId: number;
   onOpened?: () => void;
   onClosed?: () => void;
 }) {
   const modalRef = useRef<Modal>();
+  const [link, setLink] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (opened && !link) {
+      API.invoke("orgInviteLink", { pk: orgId }).then((result) => {
+        if (result?.invite_url) setLink(location.origin + result.invite_url);
+      });
+    }
+  }, [opened, orgId]);
+
   useEffect(() => {
     if (modalRef.current && opened) {
       modalRef.current?.show?.();
@@ -36,14 +36,19 @@ export function InviteLink({
     }
   }, [opened]);
 
+  const handleReset = async () => {
+    const result = await API.invoke("resetOrgInviteLink", { pk: orgId });
+    if (result?.invite_url) setLink(location.origin + result.invite_url);
+  };
+
   return (
     <Modal
       ref={modalRef}
       title="Invite members"
       opened={opened}
       bareFooter={true}
-      body={<InvitationModal />}
-      footer={<InvitationFooter />}
+      body={<InvitationModal link={link} />}
+      footer={<InvitationFooter link={link} onReset={handleReset} />}
       style={{ width: 640, height: 472 }}
       onHide={onClosed}
       onShow={onOpened}
@@ -51,11 +56,10 @@ export function InviteLink({
   );
 }
 
-const InvitationModal = () => {
-  const { data: link } = useAtomValue(linkAtom);
+const InvitationModal = ({ link }: { link: string | null }) => {
   return (
     <div className={cn("invite").toClassName()}>
-      <Input value={link} style={{ width: "100%" }} readOnly />
+      <Input value={link ?? ""} style={{ width: "100%" }} readOnly />
       <Typography size="small" className="text-neutral-content-subtler mt-base mb-wider">
         Invite members to join your Label Studio instance. People that you invite have full access to all of your
         projects.{" "}
@@ -78,9 +82,8 @@ const InvitationModal = () => {
   );
 };
 
-const InvitationFooter = () => {
+const InvitationFooter = ({ link, onReset }: { link: string | null; onReset: () => void }) => {
   const { copyText, copied } = useTextCopy();
-  const { refetch, data: link } = useAtomValue(linkAtom);
 
   return (
     <Space spread>
@@ -89,7 +92,7 @@ const InvitationFooter = () => {
           variant="negative"
           look="outlined"
           style={{ width: 170 }}
-          onClick={() => refetch()}
+          onClick={onReset}
           aria-label="Refresh invite link"
         >
           Reset Link
@@ -99,7 +102,7 @@ const InvitationFooter = () => {
         <Button
           variant={copied ? "positive" : "primary"}
           className="w-[170px]"
-          onClick={() => copyText(link!)}
+          onClick={() => link && copyText(link)}
           aria-label="Copy invite link"
         >
           {copied ? "Copied!" : "Copy link"}

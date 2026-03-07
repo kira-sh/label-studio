@@ -392,6 +392,40 @@ class OrganizationInviteAPI(generics.RetrieveAPIView):
         return Response(serializer.data, status=200)
 
 
+class OrganizationInviteByOrgAPI(generics.RetrieveAPIView):
+    """Get the invite link for a specific organization by pk."""
+    parser_classes = (JSONParser,)
+    permission_required = all_permissions.organizations_invite
+
+    def get(self, request, pk, *args, **kwargs):
+        org = get_object_or_404(Organization, pk=pk)
+        if not org.has_permission(request.user):
+            raise PermissionDenied('You do not have access to this organization.')
+        invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)
+        if hasattr(settings, 'FORCE_SCRIPT_NAME') and settings.FORCE_SCRIPT_NAME:
+            invite_url = invite_url.replace(settings.FORCE_SCRIPT_NAME, '', 1)
+        serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
+        serializer.is_valid()
+        return Response(serializer.data, status=200)
+
+
+class OrganizationResetTokenByOrgAPI(APIView):
+    """Reset the invite token for a specific organization by pk."""
+    permission_required = all_permissions.organizations_invite
+    parser_classes = (JSONParser,)
+
+    def post(self, request, pk, *args, **kwargs):
+        org = get_object_or_404(Organization, pk=pk)
+        if not org.has_permission(request.user):
+            raise PermissionDenied('You do not have access to this organization.')
+        org.reset_token()
+        logger.debug(f'New token for organization {org.pk} is {org.token}')
+        invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)
+        serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
+        serializer.is_valid()
+        return Response(serializer.data, status=201)
+
+
 @method_decorator(
     name='post',
     decorator=extend_schema(
