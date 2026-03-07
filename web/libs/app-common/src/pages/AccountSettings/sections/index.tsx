@@ -1,4 +1,5 @@
 import { PersonalInfo } from "./PersonalInfo";
+import { ChangePassword } from "./ChangePassword";
 import { EmailPreferences } from "./EmailPreferences";
 import { PersonalAccessToken, PersonalAccessTokenDescription } from "./PersonalAccessToken";
 import { MembershipInfo } from "./MembershipInfo";
@@ -25,6 +26,11 @@ export const accountSettingsSections = (settings: AuthTokenSettings, permissions
       title: "Personal Info",
       id: "personal-info",
       component: PersonalInfo,
+    },
+    {
+      title: "Change Password",
+      id: "change-password",
+      component: ChangePassword,
     },
     {
       title: (
