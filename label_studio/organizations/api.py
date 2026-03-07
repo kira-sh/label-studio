@@ -199,12 +199,24 @@ class OrganizationMemberListAPI(generics.ListAPIView):
 
             # return only active users (exclude DISABLED and NOT_ACTIVATED)
             if active:
-                return org.active_members.prefetch_related('user__om_through').order_by('user__username')
+                return (
+                    org.members.filter(deleted_at__isnull=True, user__is_active=True)
+                    .prefetch_related('user__om_through')
+                    .order_by('user__username')
+                )
 
-            # organization page to show all members
-            return org.members.prefetch_related('user__om_through').order_by('user__username')
+            # organization page to show all non-deleted members
+            return (
+                org.members.filter(deleted_at__isnull=True)
+                .prefetch_related('user__om_through')
+                .order_by('user__username')
+            )
         else:
-            return org.members.prefetch_related('user__om_through').order_by('user__username')
+            return (
+                org.members.filter(deleted_at__isnull=True)
+                .prefetch_related('user__om_through')
+                .order_by('user__username')
+            )
 
     def list(self, request, *args, **kwargs):
         page = self.paginated_members  # Using cached property to avoid multiple queries
