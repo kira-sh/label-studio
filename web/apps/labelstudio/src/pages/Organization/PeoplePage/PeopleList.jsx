@@ -76,7 +76,7 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected, orgId, onR
                   return (
                     <div
                       key={`user-${user.id}`}
-                      className={cn("people-list").elem("user").mod({ active }).toClassName()}
+                      className={cn("people-list").elem("user").mod({ active, inactive: !user.is_active }).toClassName()}
                       onClick={onSelect ? () => selectUser(user) : undefined}
                       style={onSelect ? undefined : { cursor: "default" }}
                     >

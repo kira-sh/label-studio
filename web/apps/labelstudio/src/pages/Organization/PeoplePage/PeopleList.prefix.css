@@ -95,6 +95,17 @@
       background-color: var(--color-neutral-emphasis-subtle);
     }
 
+    &_inactive {
+      .people-list__field {
+        color: var(--color-neutral-content-subtler);
+        text-decoration: line-through;
+      }
+
+      .people-list__inactive-icon {
+        text-decoration: none;
+      }
+    }
+
     &_active {
       position: relative;
       background-color: var(--color-primary-surface);
