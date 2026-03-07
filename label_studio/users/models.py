@@ -227,7 +227,7 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
         initials = '?'
 
         if is_deleted:
-            return 'DU'
+            return 'IA'
 
         if not self.first_name and not self.last_name:
             initials = self.email[0:2]

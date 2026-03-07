@@ -8,7 +8,8 @@ import { cn } from "../../../utils/bem";
 import { isDefined } from "../../../utils/helpers";
 import "./PeopleList.prefix.css";
 import { CopyableTooltip } from "../../../components/CopyableTooltip/CopyableTooltip";
-import { IconTrash } from "@humansignal/icons";
+import { IconTrash, IconBan } from "@humansignal/icons";
+import { Tooltip } from "@humansignal/ui";
 
 export const PeopleList = ({ onSelect, selectedUser, defaultSelected, orgId, onRemove }) => {
   const api = useAPI();
@@ -84,7 +85,16 @@ export const PeopleList = ({ onSelect, selectedUser, defaultSelected, orgId, onR
                           <Userpic user={user} style={{ width: 28, height: 28 }} />
                         </CopyableTooltip>
                       </div>
-                      <div className={cn("people-list").elem("field").mix("email").toClassName()}>{user.email}</div>
+                      <div className={cn("people-list").elem("field").mix("email").toClassName()}>
+                        {user.email}
+                        {!user.is_active && (
+                          <Tooltip title="This user has been deactivated">
+                            <span className={cn("people-list").elem("inactive-icon").toClassName()}>
+                              <IconBan />
+                            </span>
+                          </Tooltip>
+                        )}
+                      </div>
                       <div className={cn("people-list").elem("field").mix("last-activity").toClassName()}>
                         {formatDistance(new Date(user.last_activity), new Date(), { addSuffix: true })}
                       </div>
