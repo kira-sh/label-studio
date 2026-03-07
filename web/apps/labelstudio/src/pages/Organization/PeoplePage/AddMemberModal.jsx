@@ -1,35 +1,13 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useAPI } from "../../../providers/ApiProvider";
-
-const inputStyle = {
-  width: "100%",
-  padding: "6px 10px",
-  borderRadius: 4,
-  border: "1px solid #ccc",
-  fontSize: 13,
-  boxSizing: "border-box",
-};
-
-const labelStyle = {
-  display: "block",
-  marginBottom: 4,
-  fontSize: 12,
-  fontWeight: 600,
-  color: "#555",
-};
-
-const btnStyle = (primary) => ({
-  padding: "7px 18px",
-  borderRadius: 4,
-  border: primary ? "none" : "1px solid #ccc",
-  background: primary ? "#2196f3" : "#fff",
-  color: primary ? "#fff" : "#333",
-  cursor: "pointer",
-  fontSize: 13,
-});
+import { Button } from "@humansignal/ui";
+import { Space } from "@humansignal/ui/lib/space/space";
+import { Modal } from "../../../components/Modal/ModalPopup";
+import { Input } from "../../../components/Form";
 
 export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
   const api = useAPI();
+  const modalRef = useRef();
   const [tab, setTab] = useState("existing"); // "existing" | "new"
 
   // Existing user state
@@ -46,7 +24,12 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
   const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
 
-  // Fetch current org members once so we can exclude them from results
+  // Show modal on mount
+  useEffect(() => {
+    modalRef.current?.show?.();
+  }, []);
+
+  // Fetch current org members once so we can exclude them from search results
   useEffect(() => {
     api.callApi("memberships", { params: { pk: orgId, page_size: 1000 } }).then((data) => {
       const ids = new Set((data?.results ?? []).map((m) => m.user.id));
@@ -91,117 +74,122 @@ export const AddMemberModal = ({ orgId, onClose, onAdded }) => {
     (tab === "existing" && selectedUser) ||
     (tab === "new" && email && password);
 
-  return (
-    <div style={{
-      position: "fixed", inset: 0, background: "rgba(0,0,0,0.4)",
-      display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000,
-    }}>
-      <div style={{
-        background: "#fff", borderRadius: 8, padding: 24, width: 420,
-        boxShadow: "0 4px 24px rgba(0,0,0,0.15)",
-      }}>
-        <h3 style={{ margin: "0 0 16px" }}>Add Member</h3>
-
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-          {["existing", "new"].map((t) => (
-            <button
-              key={t}
-              onClick={() => { setTab(t); setError(null); }}
-              style={{
-                ...btnStyle(tab === t),
-                flex: 1,
-                border: tab === t ? "2px solid #2196f3" : "1px solid #ccc",
-              }}
-            >
-              {t === "existing" ? "Existing User" : "New User"}
-            </button>
-          ))}
-        </div>
-
-        {tab === "existing" ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-            <div>
-              <label style={labelStyle}>Search users</label>
-              <input
-                style={inputStyle}
-                placeholder="Email or name, press Enter to search..."
-                value={search}
-                onChange={(e) => { setSearch(e.target.value); setSearchResults([]); setSelectedUser(null); }}
-                onKeyDown={handleSearchKeyDown}
-                autoFocus
-              />
-            </div>
-            <div style={{ maxHeight: 180, overflowY: "auto", border: "1px solid #eee", borderRadius: 4 }}>
-              {searching ? (
-                <div style={{ padding: 12, color: "#aaa", fontSize: 13 }}>Searching...</div>
-              ) : searchResults.length > 0 ? (
-                searchResults.map((u) => (
-                  <div
-                    key={u.id}
-                    onClick={() => setSelectedUser(u)}
-                    style={{
-                      padding: "8px 12px", cursor: "pointer", fontSize: 13,
-                      background: selectedUser?.id === u.id ? "#e3f2fd" : "transparent",
-                      borderBottom: "1px solid #f5f5f5",
-                    }}
-                  >
-                    <strong>{u.email}</strong>
-                    {(u.first_name || u.last_name) && (
-                      <span style={{ color: "#666", marginLeft: 8 }}>
-                        {u.first_name} {u.last_name}
-                      </span>
-                    )}
-                  </div>
-                ))
-              ) : (
-                <div style={{ padding: 12, color: "#aaa", fontSize: 13 }}>
-                  {search.trim() ? "No users found" : "Type and press Enter to search"}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-            <div>
-              <label style={labelStyle}>Email</label>
-              <input
-                style={inputStyle}
-                type="email"
-                placeholder="user@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                autoFocus
-              />
-            </div>
-            <div>
-              <label style={labelStyle}>Password</label>
-              <input
-                style={inputStyle}
-                type="password"
-                placeholder="Min. 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div style={{ color: "#d32f2f", fontSize: 12, marginTop: 10 }}>{error}</div>
-        )}
-
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 20 }}>
-          <button style={btnStyle(false)} onClick={onClose}>Cancel</button>
-          <button
-            style={{ ...btnStyle(true), opacity: (!canSubmit || saving) ? 0.6 : 1 }}
-            onClick={handleSubmit}
-            disabled={!canSubmit || saving}
+  const body = (
+    <div className="flex flex-col gap-4">
+      {/* Tabs */}
+      <div className="flex gap-2">
+        {["existing", "new"].map((t) => (
+          <Button
+            key={t}
+            look={tab === t ? "filled" : "outlined"}
+            size="small"
+            onClick={() => { setTab(t); setError(null); }}
+            style={{ flex: 1 }}
           >
-            {saving ? "Adding..." : "Add Member"}
-          </button>
-        </div>
+            {t === "existing" ? "Existing User" : "New User"}
+          </Button>
+        ))}
       </div>
+
+      {tab === "existing" ? (
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="block mb-1 text-sm font-semibold text-neutral-content">Search users</label>
+            <Input
+              placeholder="Email, press Enter to search…"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setSearchResults([]); setSelectedUser(null); }}
+              onKeyDown={handleSearchKeyDown}
+              autoFocus
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div className="max-h-44 overflow-y-auto border border-neutral-border rounded">
+            {searching ? (
+              <div className="p-3 text-sm text-neutral-content-subtler">Searching…</div>
+            ) : searchResults.length > 0 ? (
+              searchResults.map((u) => (
+                <div
+                  key={u.id}
+                  onClick={() => setSelectedUser(u)}
+                  className={`px-3 py-2 cursor-pointer text-sm border-b border-neutral-border last:border-0 ${
+                    selectedUser?.id === u.id ? "bg-primary-emphasis-subtle" : "hover:bg-neutral-surface"
+                  }`}
+                >
+                  <span className="font-medium">{u.email}</span>
+                  {(u.first_name || u.last_name) && (
+                    <span className="text-neutral-content-subtler ml-2">
+                      {u.first_name} {u.last_name}
+                    </span>
+                  )}
+                </div>
+              ))
+            ) : (
+              <div className="p-3 text-sm text-neutral-content-subtler">
+                {search.trim() ? "No users found" : "Type and press Enter to search"}
+              </div>
+            )}
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-3">
+          <div>
+            <label className="block mb-1 text-sm font-semibold text-neutral-content">Email</label>
+            <Input
+              type="email"
+              placeholder="user@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              autoFocus
+              style={{ width: "100%" }}
+            />
+          </div>
+          <div>
+            <label className="block mb-1 text-sm font-semibold text-neutral-content">Password</label>
+            <Input
+              type="password"
+              placeholder="Min. 8 characters"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              style={{ width: "100%" }}
+            />
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p className="text-negative-content text-sm m-0">{error}</p>
+      )}
     </div>
+  );
+
+  const footer = (
+    <Space spread>
+      <Space />
+      <Space>
+        <Button look="outlined" onClick={onClose} aria-label="Cancel">
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={!canSubmit || saving}
+          aria-label="Add member"
+        >
+          {saving ? "Adding…" : "Add Member"}
+        </Button>
+      </Space>
+    </Space>
+  );
+
+  return (
+    <Modal
+      ref={modalRef}
+      title="Add Member"
+      body={body}
+      footer={footer}
+      bareFooter
+      style={{ width: 460 }}
+      onHide={onClose}
+    />
   );
 };

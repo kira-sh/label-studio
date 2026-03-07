@@ -6,7 +6,8 @@ import { PeopleList } from "./PeoplePage/PeopleList";
 import { CreateProject } from "../CreateProject/CreateProject";
 import { InviteLink } from "./PeoplePage/InviteLink";
 import { AddMemberModal } from "./PeoplePage/AddMemberModal";
-import { cn } from "../../utils/bem";
+import { Button } from "@humansignal/ui";
+import { IconPlus, IconUserAdd, IconLink } from "@humansignal/icons";
 
 const OrgCard = ({ org }) => {
   const api = useAPI();
@@ -26,66 +27,52 @@ const OrgCard = ({ org }) => {
   }, [fetchProjects]);
 
   return (
-    <div style={{ border: "1px solid #e0e0e0", borderRadius: 8, padding: 24, marginBottom: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-        <h2 style={{ margin: 0 }}>{org.title}</h2>
-        <button
+    <div className="border border-neutral-border rounded-lg p-6 mb-6">
+      <div className="flex items-center gap-3 mb-4">
+        <h2 className="m-0 text-xl font-semibold">{org.title}</h2>
+        <Button
+          look="outlined"
+          size="small"
+          leading={<IconLink className="!h-4" />}
           onClick={() => setInviteOpen(true)}
-          style={{
-            fontSize: 12,
-            padding: "3px 10px",
-            borderRadius: 4,
-            border: "1px solid #ccc",
-            background: "#fff",
-            cursor: "pointer",
-          }}
+          aria-label="Invite members"
         >
           Invite Members
-        </button>
+        </Button>
       </div>
-      <div style={{ display: "flex", gap: 32 }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            <h3 style={{ margin: 0 }}>Members</h3>
-            <button
+      <div className="flex gap-8">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="m-0 text-base font-medium">Members</h3>
+            <Button
+              size="small"
+              leading={<IconUserAdd className="!h-4" />}
               onClick={() => setAddMemberOpen(true)}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                borderRadius: 4,
-                border: "1px solid #ccc",
-                background: "#fff",
-                cursor: "pointer",
-              }}
+              aria-label="Add member"
             >
-              + Add Member
-            </button>
+              Add Member
+            </Button>
           </div>
           <PeopleList key={memberListKey} orgId={org.id} />
         </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-            <h3 style={{ margin: 0 }}>Projects</h3>
-            <button
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-3">
+            <h3 className="m-0 text-base font-medium">Projects</h3>
+            <Button
+              size="small"
+              leading={<IconPlus className="!h-4" />}
               onClick={() => setCreateOpen(true)}
-              style={{
-                fontSize: 12,
-                padding: "3px 10px",
-                borderRadius: 4,
-                border: "1px solid #ccc",
-                background: "#fff",
-                cursor: "pointer",
-              }}
+              aria-label="Create new project"
             >
-              + New Project
-            </button>
+              New Project
+            </Button>
           </div>
           {projects.length === 0 ? (
-            <p style={{ color: "#888" }}>No projects</p>
+            <p className="text-neutral-content-subtler">No projects yet</p>
           ) : (
-            <ul style={{ paddingLeft: 20, margin: 0 }}>
+            <ul className="pl-5 m-0">
               {projects.map((p) => (
-                <li key={p.id} style={{ marginBottom: 4 }}>
+                <li key={p.id} className="mb-1">
                   <a href={`/projects/${p.id}/data`}>{p.title}</a>
                 </li>
               ))}
@@ -135,18 +122,18 @@ const OrganizationListPage = () => {
 
   if (orgs === null) {
     return (
-      <div style={{ display: "flex", justifyContent: "center", padding: 64 }}>
+      <div className="flex justify-center p-16">
         <Spinner size={48} />
       </div>
     );
   }
 
   if (orgs.length === 0) {
-    return <p style={{ padding: 32 }}>You are not a member of any organization.</p>;
+    return <p className="p-8 text-neutral-content-subtler">You are not a member of any organization.</p>;
   }
 
   return (
-    <div style={{ padding: 32 }}>
+    <div className="p-8">
       {orgs.map((org) => (
         <OrgCard key={org.id} org={org} />
       ))}
