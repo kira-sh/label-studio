@@ -55,7 +55,7 @@ def predictions_to_annotations(project, queryset, **kwargs):
         TaskSerializerBulk.post_process_annotations(user, db_annotations, 'prediction')
         # Execute webhook for created annotations
         emit_webhooks_for_instance(
-            user.active_organization, project, WebhookAction.ANNOTATIONS_CREATED, db_annotations
+            project.organization, project, WebhookAction.ANNOTATIONS_CREATED, db_annotations
         )
         # Update counters for tasks and is_labeled. It should be a single operation as counters affect bulk is_labeled update
         project.update_tasks_counters_and_is_labeled(Task.objects.filter(id__in=tasks_ids))

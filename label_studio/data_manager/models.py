@@ -40,9 +40,9 @@ class ProjectViewMixin(models.Model):
 
     def has_permission(self, user):
         user.project = self.project  # link for activity log
-        if self.project.organization == user.active_organization:
-            return True
-        return False
+        return user.organizations.filter(
+            pk=self.project.organization_id, organizationmember__deleted_at__isnull=True
+        ).exists()
 
     class Meta:
         abstract = True

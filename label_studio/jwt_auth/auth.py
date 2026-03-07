@@ -27,7 +27,8 @@ class TokenAuthenticationPhaseout(TokenAuthentication):
         JWT_ACCESS_TOKEN_ENABLED = flag_set('fflag__feature_develop__prompts__dia_1829_jwt_token_auth')
         if JWT_ACCESS_TOKEN_ENABLED and (auth_result is not None):
             user, _ = auth_result
-            org = user.active_organization
+            om = user.om_through.filter(deleted_at__isnull=True).select_related('organization').first()
+            org = om.organization if om else None
             org_id = org.id if org else None
 
             # raise 401 if legacy API token auth disabled (i.e. this token is no longer valid)

@@ -32,7 +32,8 @@ def main(request):
     user = request.user
 
     if user.is_authenticated:
-        if user.active_organization is None and 'organization_pk' not in request.session:
+
+        if not user.om_through.filter(deleted_at__isnull=True).exists():
             logout(request)
             return redirect(reverse('user-login'))
 

@@ -12,18 +12,22 @@ function formatDate(date?: string) {
 
 export const MembershipInfo = () => {
   const { user } = useAuth();
+  const primaryOrg = user?.organizations?.[0];
+  const primaryOrgId = primaryOrg?.organization__id;
+  const primaryOrgTitle = primaryOrg?.organization__title;
+
   const dateJoined = useMemo(() => {
     if (!user?.date_joined) return null;
     return formatDate(user?.date_joined);
   }, [user?.date_joined]);
 
   const membership = useQuery({
-    queryKey: [user?.active_organization, user?.id, "user-membership"],
+    queryKey: [primaryOrgId, user?.id, "user-membership"],
     async queryFn() {
-      if (!user) return {};
+      if (!user || !primaryOrgId) return {};
       const api = getApiInstance();
       const response = (await api.invoke("userMemberships", {
-        pk: user.active_organization,
+        pk: primaryOrgId,
         userPk: user.id,
       })) as WrappedResponse<{
         user: number;
@@ -71,13 +75,13 @@ export const MembershipInfo = () => {
   });
 
   const organization = useQuery({
-    queryKey: ["organization", user?.active_organization],
+    queryKey: ["organization", primaryOrgId],
     async queryFn() {
-      if (!user) return null;
+      if (!user || !primaryOrgId) return null;
       if (!window?.APP_SETTINGS?.billing) return null;
       const api = getApiInstance();
       const organization = (await api.invoke("organization", {
-        pk: user.active_organization,
+        pk: primaryOrgId,
       })) as WrappedResponse<{
         id: number;
         external_id: string;
@@ -122,10 +126,10 @@ export const MembershipInfo = () => {
 
       <div className={styles.divider} />
 
-      {user?.active_organization_meta && (
+      {primaryOrgTitle && (
         <div className="flex gap-2 w-full justify-between">
           <div>Organization</div>
-          <div>{user.active_organization_meta.title}</div>
+          <div>{primaryOrgTitle}</div>
         </div>
       )}
 
@@ -138,15 +142,8 @@ export const MembershipInfo = () => {
 
       <div className="flex gap-2 w-full justify-between">
         <div>Organization ID</div>
-        <div>{user?.active_organization}</div>
+        <div>{primaryOrgId}</div>
       </div>
-
-      {user?.active_organization_meta && (
-        <div className="flex gap-2 w-full justify-between">
-          <div>Owner</div>
-          <div>{user.active_organization_meta.email}</div>
-        </div>
-      )}
 
       {organization.data?.createdAt && (
         <div className="flex gap-2 w-full justify-between">

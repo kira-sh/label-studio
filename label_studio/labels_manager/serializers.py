@@ -23,8 +23,10 @@ class LabelListSerializer(serializers.ListSerializer):
         with transaction.atomic():
             # loading already existing labels
             titles = [item['title'] for item in validated_data]
+            # derive org from the project (labels are org-scoped)
+            project_org_id = validated_data[0].get('project').organization_id if validated_data else None
             existing_labels = Label.objects.filter(
-                organization=self.context['request'].user.active_organization, title__in=titles
+                organization_id=project_org_id, title__in=titles
             ).all()
             existing_labels_map = {label.title: label for label in existing_labels}
 
@@ -79,7 +81,7 @@ class LabelListSerializer(serializers.ListSerializer):
             links = LabelLink.objects.filter(label_id__in=label_ids, project=project).all()
             if links:
                 emit_webhooks_for_instance(
-                    self.context['request'].user.active_organization, links[0].project, 'LABEL_LINK_CREATED', links
+                    links[0].project.organization, links[0].project, 'LABEL_LINK_CREATED', links
                 )
 
         return result

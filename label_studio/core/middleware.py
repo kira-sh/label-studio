@@ -213,7 +213,19 @@ class InactivitySessionTimeoutMiddleWare(CommonMiddleware):
         current_time = time.time()
         last_login = request.session['last_login'] if 'last_login' in request.session else 0
 
-        active_org = request.user.active_organization
+        # Resolve org from URL kwargs if available (e.g. /api/organizations/<pk>/...)
+        org_pk = None
+        if hasattr(request, 'resolver_match') and request.resolver_match:
+            org_pk = request.resolver_match.kwargs.get('pk')
+
+        active_org = None
+        if org_pk:
+            try:
+                from organizations.models import Organization
+                active_org = Organization.objects.select_related('session_timeout_policy').get(pk=org_pk)
+            except Exception:
+                pass
+
         if active_org:
             org_max_session_age = timedelta(minutes=active_org.session_timeout_policy.max_session_age).total_seconds()
             max_time_between_activity = timedelta(

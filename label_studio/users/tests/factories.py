@@ -17,6 +17,4 @@ class UserFactory(factory.django.DjangoModelFactory):
     def active_organization(self, create, extracted, **kwargs):
         if not create or not extracted:
             return
-        self.active_organization = extracted
-        self.save(update_fields=['active_organization'])
-        OrganizationMember.objects.create(user=self, organization=extracted)
+        OrganizationMember.objects.get_or_create(user=self, organization=extracted)

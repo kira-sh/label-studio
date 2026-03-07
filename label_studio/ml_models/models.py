@@ -56,7 +56,7 @@ class ModelInterface(models.Model):
     associated_projects = models.ManyToManyField('projects.Project', blank=True)
 
     def has_permission(self, user):
-        return user.active_organization == self.organization
+        return user.organizations.filter(pk=self.organization_id, organizationmember__deleted_at__isnull=True).exists()
 
 
 class ModelVersion(models.Model):
@@ -125,7 +125,7 @@ class ThirdPartyModelVersion(ModelVersion):
         return None
 
     def has_permission(self, user):
-        return user.active_organization == self.organization
+        return user.organizations.filter(pk=self.organization_id, organizationmember__deleted_at__isnull=True).exists()
 
 
 class ModelRun(models.Model):
@@ -187,7 +187,7 @@ class ModelRun(models.Model):
     completed_at = models.DateTimeField(_('completed at'), null=True, default=None)
 
     def has_permission(self, user):
-        return user.active_organization == self.organization
+        return user.organizations.filter(pk=self.organization_id, organizationmember__deleted_at__isnull=True).exists()
 
     def delete_predictions(self):
         """

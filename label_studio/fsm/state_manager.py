@@ -254,7 +254,7 @@ class StateManager:
                 new_state='IN_PROGRESS',
                 transition_name='start_annotation',
                 user=request.user,
-                organization_id=request.user.active_organization_id,
+                organization_id=None,
                 context={'assignment_id': assignment.id},
                 reason='User started annotation work'
             )
@@ -316,16 +316,11 @@ class StateManager:
                 # Get denormalized fields from the state model class
                 denormalized_fields = state_model.get_denormalized_fields(entity)
 
-                # Get organization from entity or denormalized fields, or user's active organization
+                # Get organization from entity or denormalized fields
                 if organization_id is None:
                     organization_id = getattr(
                         entity, 'organization_id', getattr(denormalized_fields, 'organization_id', None)
                     )
-                    if organization_id is not None:
-                        CurrentContext.set_organization_id(organization_id)
-
-                if not organization_id and user and hasattr(user, 'active_organization') and user.active_organization:
-                    organization_id = user.active_organization.id
                     if organization_id is not None:
                         CurrentContext.set_organization_id(organization_id)
 

@@ -45,8 +45,6 @@ def test_project_manager_for_user_respects_filter():
     org1 = OrganizationFactory()
     org2 = OrganizationFactory()
     user = org1.created_by
-    user.active_organization = org1
-    user.save(update_fields=['active_organization'])
 
     p1 = ProjectFactory(organization=org1, title='org1-active')
     _ = ProjectFactory(organization=org1, title='org1-deleted', deleted_at=p1.created_at)

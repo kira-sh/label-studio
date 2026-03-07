@@ -223,8 +223,9 @@ def api_webhook(action):
             project = None
             if 'project-field' in action_meta:
                 project = get_nested_field(instance, action_meta['project-field'])
+            org = project.organization if project else None
             emit_webhooks_for_instance(
-                request.user.active_organization,
+                org,
                 project,
                 action,
                 instance,
@@ -267,7 +268,8 @@ def api_webhook_for_delete(action):
 
             response = func(self, request, *args, **kwargs)
 
-            emit_webhooks_for_instance(request.user.active_organization, project, action, obj)
+            org = project.organization if project else None
+            emit_webhooks_for_instance(org, project, action, obj)
             return response
 
         return wrap

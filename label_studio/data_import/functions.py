@@ -108,7 +108,7 @@ def async_import_background(
 
             try:
                 tasks = serializer.save(project_id=project.id)
-                emit_webhooks_for_instance(user.active_organization, project, WebhookAction.TASKS_CREATED, tasks)
+                emit_webhooks_for_instance(project.organization, project, WebhookAction.TASKS_CREATED, tasks)
 
                 task_count = len(tasks)
                 annotation_count = len(serializer.db_annotations)
@@ -515,7 +515,7 @@ def _async_import_background_streaming(project_import, user):
             )
 
             emit_webhooks_for_instance(
-                user.active_organization, project, WebhookAction.TASKS_CREATED, all_created_task_ids
+                project.organization, project, WebhookAction.TASKS_CREATED, all_created_task_ids
             )
 
             recalculate_stats_counts = {

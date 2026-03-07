@@ -490,8 +490,9 @@ class TestColdStartScenarios:
         # Set the user from business_client to CurrentContext
         user = business_client.user
         CurrentContext.set_user(user)
-        if hasattr(user, 'active_organization') and user.active_organization:
-            CurrentContext.set_organization_id(user.active_organization.id)
+        om = user.om_through.filter(deleted_at__isnull=True).select_related('organization').first()
+        if om:
+            CurrentContext.set_organization_id(om.organization.id)
 
         yield
 

@@ -46,8 +46,6 @@ class CurrentContext:
     @classmethod
     def set_user(cls, user):
         cls.set('user', user)
-        if getattr(user, 'active_organization_id', None):
-            cls.set_organization_id(user.active_organization_id)
 
         # PERFORMANCE: Cache FSM enabled state at request level when user is set
         # This allows all downstream code to check a simple boolean property

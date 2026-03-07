@@ -68,13 +68,10 @@ class OrganizationMember(OrganizationMemberMixin, models.Model):
         with transaction.atomic():
             self.deleted_at = timezone.now()
             self.save(update_fields=['deleted_at'])
-            self.user.active_organization = self.user.organizations.filter(
-                organizationmember__deleted_at__isnull=True
-            ).first()
             if self.user.avatar:
                 self.user.avatar.delete(save=False)
                 self.user.avatar = None
-            self.user.save(update_fields=['active_organization', 'avatar'])
+                self.user.save(update_fields=['avatar'])
 
         self.user.task_locks.all().delete()
 
@@ -161,9 +158,6 @@ class Organization(OrganizationMixin, models.Model):
 
     def remove_user(self, user):
         OrganizationMember.objects.filter(user=user, organization=self).delete()
-        if user.active_organization_id == self.id:
-            user.active_organization = user.organizations.filter(organizationmember__deleted_at__isnull=True).first()
-            user.save(update_fields=['active_organization'])
 
     def reset_token(self):
         self.token = create_hash()

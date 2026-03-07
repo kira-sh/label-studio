@@ -8,10 +8,11 @@ from users.models import User
 
 
 @pytest.mark.django_db
-def test_active_organization_filled(business_client):
+def test_organizations_list_in_user(business_client):
     response = business_client.get('/api/users/')
     response_data = response.json()
-    assert response_data[0]['active_organization'] == business_client.organization.id
+    org_ids = [org['organization__id'] for org in response_data[0]['organizations']]
+    assert business_client.organization.id in org_ids
 
 
 @pytest.mark.django_db

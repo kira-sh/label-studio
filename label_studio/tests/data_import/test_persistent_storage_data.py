@@ -74,8 +74,7 @@ class TestDownloadStorageData:
         """Create a test user with organization"""
         org = Organization.objects.create(title='Test Org')
         user = User.objects.create_user(email='test@example.com', password='test123')
-        user.active_organization = org
-        user.save()
+        org.add_user(user)
         return user
 
     @pytest.fixture
@@ -83,8 +82,7 @@ class TestDownloadStorageData:
         """Create another user with different organization"""
         other_org = Organization.objects.create(title='Other Org')
         other_user = User.objects.create_user(email='other@example.com', password='test123')
-        other_user.active_organization = other_org
-        other_user.save()
+        other_org.add_user(other_user)
         return other_user
 
     @pytest.fixture
@@ -166,9 +164,6 @@ class TestDownloadStorageData:
         mock_avatar_user.avatar = Mock()
         mock_filter.return_value.first.return_value = mock_avatar_user
 
-        # Mock organization access check to return False
-        user.active_organization.has_user = Mock(return_value=False)
-
         request = api_factory.get('/storage-data/uploaded/', {'filepath': f'{settings.AVATAR_PATH}/avatar.jpg'})
         request.user = user
 
@@ -226,9 +221,6 @@ class TestDownloadStorageData:
         mock_avatar_user.avatar = mock_avatar_file
         mock_filter.return_value.first.return_value = mock_avatar_user
 
-        # Mock organization access check to return True
-        user.active_organization.has_user = Mock(return_value=True)
-
         request = api_factory.get('/storage-data/uploaded/', {'filepath': f'{settings.AVATAR_PATH}/avatar.jpg'})
         request.user = user
 
@@ -252,9 +244,6 @@ class TestDownloadStorageData:
         mock_response_instance = Mock()
         mock_response_instance.__setitem__ = Mock()  # Allow item assignment
         mock_ranged_response.return_value = mock_response_instance
-
-        # Mock organization access check to return True
-        user.active_organization.has_user = Mock(return_value=True)
 
         request = api_factory.get('/storage-data/uploaded/', {'filepath': f'{settings.AVATAR_PATH}/avatar.jpg'})
         request.user = user

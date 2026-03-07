@@ -208,7 +208,9 @@ class ProjectListAPI(generics.ListCreateAPIView):
                 from organizations.models import Organization
                 organization = Organization.objects.get(pk=org_id)
             else:
-                organization = self.request.user.active_organization or self.request.user.organizations.first()
+                organization = self.request.user.organizations.filter(
+                    organizationmember__deleted_at__isnull=True
+                ).first()
             ser.save(organization=organization)
         except IntegrityError as e:
             if str(e) == 'UNIQUE constraint failed: project.title, project.created_by_id':

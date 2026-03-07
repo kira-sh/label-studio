@@ -363,35 +363,6 @@ class OrganizationAPI(generics.RetrieveUpdateAPIView):
         return super(OrganizationAPI, self).put(request, *args, **kwargs)
 
 
-@method_decorator(
-    name='get',
-    decorator=extend_schema(
-        tags=['Invites'],
-        summary='Get organization invite link',
-        description='Get a link to use to invite a new member to an organization in Label Studio Enterprise.',
-        responses={200: OrganizationInviteSerializer()},
-        extensions={
-            'x-fern-sdk-group-name': 'organizations',
-            'x-fern-sdk-method-name': 'get_invite',
-            'x-fern-audiences': ['public'],
-        },
-    ),
-)
-class OrganizationInviteAPI(generics.RetrieveAPIView):
-    parser_classes = (JSONParser,)
-    queryset = Organization.objects.all()
-    permission_required = all_permissions.organizations_invite
-
-    def get(self, request, *args, **kwargs):
-        org = request.user.active_organization
-        invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)
-        if hasattr(settings, 'FORCE_SCRIPT_NAME') and settings.FORCE_SCRIPT_NAME:
-            invite_url = invite_url.replace(settings.FORCE_SCRIPT_NAME, '', 1)
-        serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
-        serializer.is_valid()
-        return Response(serializer.data, status=200)
-
-
 class OrganizationInviteByOrgAPI(generics.RetrieveAPIView):
     """Get the invite link for a specific organization by pk."""
     parser_classes = (JSONParser,)
@@ -418,34 +389,6 @@ class OrganizationResetTokenByOrgAPI(APIView):
         org = get_object_or_404(Organization, pk=pk)
         if not org.has_permission(request.user):
             raise PermissionDenied('You do not have access to this organization.')
-        org.reset_token()
-        logger.debug(f'New token for organization {org.pk} is {org.token}')
-        invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)
-        serializer = OrganizationInviteSerializer(data={'invite_url': invite_url, 'token': org.token})
-        serializer.is_valid()
-        return Response(serializer.data, status=201)
-
-
-@method_decorator(
-    name='post',
-    decorator=extend_schema(
-        tags=['Invites'],
-        summary='Reset organization token',
-        description='Reset the token used in the invitation link to invite someone to an organization.',
-        responses={200: OrganizationInviteSerializer()},
-        extensions={
-            'x-fern-sdk-group-name': 'organizations',
-            'x-fern-sdk-method-name': 'reset_token',
-            'x-fern-audiences': ['public'],
-        },
-    ),
-)
-class OrganizationResetTokenAPI(APIView):
-    permission_required = all_permissions.organizations_invite
-    parser_classes = (JSONParser,)
-
-    def post(self, request, *args, **kwargs):
-        org = request.user.active_organization
         org.reset_token()
         logger.debug(f'New token for organization {org.pk} is {org.token}')
         invite_url = '{}?token={}'.format(reverse('user-signup'), org.token)

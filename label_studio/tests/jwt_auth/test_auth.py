@@ -25,7 +25,8 @@ def test_logging_when_legacy_token_auth_enabled(caplog):
     assert len(basic_auth_logs) == 1
     record = basic_auth_logs[0]
     assert record.user_id == user.id
-    assert record.organization_id == user.active_organization.id
+    om = user.om_through.filter(deleted_at__isnull=True).select_related('organization').first()
+    assert record.organization_id == (om.organization.id if om else None)
     assert record.endpoint == '/api/projects/'
 
 
