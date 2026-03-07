@@ -179,7 +179,11 @@ class UserAPI(viewsets.ModelViewSet):
     http_method_names = ['get', 'post', 'head', 'patch', 'delete']
 
     def get_queryset(self):
-        return User.objects.filter(organizations__in=self.request.user.organizations.all()).distinct()
+        qs = User.objects.filter(organizations__in=self.request.user.organizations.all()).distinct()
+        search = self.request.query_params.get('search', '').strip()
+        if search:
+            qs = qs.filter(email__icontains=search)
+        return qs
 
     @extend_schema(exclude=True)
     @action(detail=True, methods=['delete', 'post'], permission_required=all_permissions.avatar_any)

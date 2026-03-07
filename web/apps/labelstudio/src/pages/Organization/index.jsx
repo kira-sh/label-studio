@@ -5,6 +5,7 @@ import { useUpdatePageTitle } from "@humansignal/core";
 import { PeopleList } from "./PeoplePage/PeopleList";
 import { CreateProject } from "../CreateProject/CreateProject";
 import { InviteLink } from "./PeoplePage/InviteLink";
+import { AddMemberModal } from "./PeoplePage/AddMemberModal";
 import { cn } from "../../utils/bem";
 
 const OrgCard = ({ org }) => {
@@ -12,6 +13,8 @@ const OrgCard = ({ org }) => {
   const [projects, setProjects] = useState([]);
   const [createOpen, setCreateOpen] = useState(false);
   const [inviteOpen, setInviteOpen] = useState(false);
+  const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [memberListKey, setMemberListKey] = useState(0);
 
   const fetchProjects = useCallback(() => {
     api.callApi("projects", { params: { organization_id: org.id, page_size: 100, include: "id,title" } })
@@ -42,8 +45,23 @@ const OrgCard = ({ org }) => {
       </div>
       <div style={{ display: "flex", gap: 32 }}>
         <div style={{ flex: 1 }}>
-          <h3 style={{ marginTop: 0 }}>Members</h3>
-          <PeopleList orgId={org.id} />
+          <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+            <h3 style={{ margin: 0 }}>Members</h3>
+            <button
+              onClick={() => setAddMemberOpen(true)}
+              style={{
+                fontSize: 12,
+                padding: "3px 10px",
+                borderRadius: 4,
+                border: "1px solid #ccc",
+                background: "#fff",
+                cursor: "pointer",
+              }}
+            >
+              + Add Member
+            </button>
+          </div>
+          <PeopleList key={memberListKey} orgId={org.id} />
         </div>
         <div style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
@@ -89,6 +107,13 @@ const OrgCard = ({ org }) => {
         orgId={org.id}
         onClosed={() => setInviteOpen(false)}
       />
+      {addMemberOpen && (
+        <AddMemberModal
+          orgId={org.id}
+          onClose={() => setAddMemberOpen(false)}
+          onAdded={() => setMemberListKey((k) => k + 1)}
+        />
+      )}
     </div>
   );
 };
