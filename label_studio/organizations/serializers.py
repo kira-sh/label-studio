@@ -72,7 +72,7 @@ class OrganizationMemberListSerializer(DynamicFieldsMixin, serializers.ModelSeri
 
     class Meta:
         model = OrganizationMember
-        fields = ['id', 'organization', 'user', 'created_projects', 'contributed_to_projects']
+        fields = ['id', 'organization', 'user', 'created_projects', 'contributed_to_projects', 'is_admin']
 
     def get_created_projects(self, member) -> list[ProjectInfo] | None:
         if not self.context.get('contributed_to_projects', False):
@@ -143,6 +143,7 @@ class OrganizationMemberSerializer(DynamicFieldsMixin, serializers.ModelSerializ
             'created_at',
             'created_projects',
             'contributed_to_projects',
+            'is_admin',
         ]
 
 

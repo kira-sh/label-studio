@@ -38,6 +38,12 @@ class OrganizationMember(OrganizationMemberMixin, models.Model):
         'If NULL, the member is not considered deleted.',
     )
 
+    is_admin = models.BooleanField(
+        _('is admin'),
+        default=False,
+        help_text='Whether this member has admin privileges in the organization.',
+    )
+
     # objects = OrganizationMemberQuerySet.as_manager()
 
     @classmethod
@@ -124,6 +130,11 @@ class Organization(OrganizationMixin, models.Model):
             return Organization.objects.get(token=token)
         else:
             raise KeyError(f"Can't find Organization by welcome URL: {url}")
+
+    def is_admin(self, user):
+        return OrganizationMember.objects.filter(
+            user=user, organization=self, is_admin=True, deleted_at__isnull=True
+        ).exists()
 
     def has_user(self, user):
         return self.users.filter(pk=user.pk).exists()
