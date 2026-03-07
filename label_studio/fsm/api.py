@@ -106,7 +106,7 @@ class FSMEntityHistoryAPI(FSMAPIMixin, generics.ListAPIView):
         entity = self.get_entity()
         state_manager = get_state_manager()
         qs = state_manager.get_state_history(entity)
-        qs = qs.filter(organization_id__in=self.request.user.organizations.values_list('id', flat=True))
+        qs = qs.filter(organization_id__in=self.request.user.active_organizations.values_list('id', flat=True))
         qs = qs.prefetch_related('triggered_by__om_through')
         return qs
 

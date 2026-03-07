@@ -176,7 +176,7 @@ class ProjectListAPI(generics.ListCreateAPIView):
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
         filter = serializer.validated_data.get('filter')
-        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
+        user_org_ids = self.request.user.active_organizations.values_list('id', flat=True)
         projects = Project.objects.filter(organization__in=user_org_ids).order_by(
             F('pinned_at').desc(nulls_last=True), '-created_at'
         )
@@ -203,14 +203,12 @@ class ProjectListAPI(generics.ListCreateAPIView):
     def perform_create(self, ser):
         try:
             org_id = self.request.data.get('organization')
-            user_org_ids = list(self.request.user.organizations.values_list('id', flat=True))
+            user_org_ids = list(self.request.user.active_organizations.values_list('id', flat=True))
             if org_id and int(org_id) in user_org_ids:
                 from organizations.models import Organization
                 organization = Organization.objects.get(pk=org_id)
             else:
-                organization = self.request.user.organizations.filter(
-                    organizationmember__deleted_at__isnull=True
-                ).first()
+                organization = self.request.user.active_organizations.first()
             ser.save(organization=organization)
         except IntegrityError as e:
             if str(e) == 'UNIQUE constraint failed: project.title, project.created_by_id':
@@ -256,7 +254,7 @@ class ProjectCountsListAPI(generics.ListAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
-        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
+        user_org_ids = self.request.user.active_organizations.values_list('id', flat=True)
         projects = Project.objects.with_counts(fields=fields).filter(
             organization__in=user_org_ids
         )
@@ -391,7 +389,7 @@ class ProjectAPI(generics.RetrieveUpdateDestroyAPIView):
         serializer = GetFieldsSerializer(data=self.request.query_params)
         serializer.is_valid(raise_exception=True)
         fields = serializer.validated_data.get('include')
-        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
+        user_org_ids = self.request.user.active_organizations.values_list('id', flat=True)
         projects = Project.objects.with_counts(fields=fields).filter(
             organization__in=user_org_ids
         )
@@ -871,7 +869,7 @@ class ProjectModelVersions(generics.RetrieveAPIView):
     permission_required = all_permissions.projects_view
 
     def get_queryset(self):
-        user_org_ids = self.request.user.organizations.values_list('id', flat=True)
+        user_org_ids = self.request.user.active_organizations.values_list('id', flat=True)
         return Project.objects.filter(organization__in=user_org_ids)
 
     def get(self, request, *args, **kwargs):

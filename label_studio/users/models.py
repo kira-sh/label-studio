@@ -212,6 +212,13 @@ class User(UserMixin, AbstractBaseUser, PermissionsMixin, UserLastActivityMixin)
         Token.objects.filter(user=self).delete()
         return Token.objects.create(user=self)
 
+    @property
+    def active_organizations(self):
+        """Return organizations where this user has an active (non-deleted) membership."""
+        from organizations.models import Organization
+        active_org_ids = self.om_through.filter(deleted_at__isnull=True).values_list('organization_id', flat=True)
+        return Organization.objects.filter(pk__in=active_org_ids)
+
     def get_initials(self, is_deleted=False):
         initials = '?'
 

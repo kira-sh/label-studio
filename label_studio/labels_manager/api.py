@@ -108,10 +108,10 @@ class LabelAPI(viewsets.ModelViewSet):
         return super().get_serializer(*args, **kwargs)
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user, organization=self.request.user.organizations.first())
+        serializer.save(created_by=self.request.user, organization=self.request.user.active_organizations.first())
 
     def get_queryset(self):
-        return Label.objects.filter(organization__in=self.request.user.organizations.values_list('id', flat=True)).prefetch_related('links')
+        return Label.objects.filter(organization__in=self.request.user.active_organizations.values_list('id', flat=True)).prefetch_related('links')
 
     def get_serializer_class(self):
         if self.request.method == 'POST':
@@ -209,7 +209,7 @@ class LabelLinkAPI(viewsets.ModelViewSet):
     )
 
     def get_queryset(self):
-        return LabelLink.objects.filter(label__organization__in=self.request.user.organizations.values_list('id', flat=True)).annotate(
+        return LabelLink.objects.filter(label__organization__in=self.request.user.active_organizations.values_list('id', flat=True)).annotate(
             annotations_count=Count(
                 'project__tasks__annotations',
                 filter=Q(
@@ -255,7 +255,7 @@ class LabelBulkUpdateAPI(views.APIView):
         updated_count = bulk_update_label(
             old_label=serializer.validated_data['old_label'],
             new_label=serializer.validated_data['new_label'],
-            organization=project.organization if project else self.request.user.organizations.first(),
+            organization=project.organization if project else self.request.user.active_organizations.first(),
             project=project,
         )
         return Response({'annotations_updated': updated_count})
