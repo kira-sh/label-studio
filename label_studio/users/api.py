@@ -420,3 +420,16 @@ class UserHotkeysAPI(APIView):
         except Exception as e:
             logger.error(f'Error updating hotkeys for user {request.user.pk}: {str(e)}')
             return Response({'error': 'Failed to update hotkeys configuration'}, status=500)
+
+
+class SetPasswordAPI(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def post(self, request, *args, **kwargs):
+        password = request.data.get('password', '').strip()
+        if len(password) < 8:
+            return Response({'error': 'Password must be at least 8 characters.'}, status=400)
+        request.user.set_password(password)
+        request.user.save(update_fields=['password'])
+        return Response({'detail': 'Password updated successfully.'}, status=200)
