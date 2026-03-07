@@ -1,13 +1,11 @@
 import React, { useState } from "react";
 import { useParams as useRouterParams } from "react-router";
 import { Redirect } from "react-router-dom";
-import { Button } from "@humansignal/ui";
 import { Oneof } from "../../components/Oneof/Oneof";
 import { Spinner } from "../../components/Spinner/Spinner";
 import { ApiContext } from "../../providers/ApiProvider";
 import { useContextProps } from "../../providers/RoutesProvider";
 import { cn } from "../../utils/bem";
-import { CreateProject } from "../CreateProject/CreateProject";
 import { DataManagerPage } from "../DataManager/DataManager";
 import { SettingsPage } from "../Settings";
 import { EmptyProjectsList, ProjectsList } from "./ProjectsList";
@@ -39,12 +37,6 @@ export const ProjectsPage = () => {
 
   useUpdatePageTitle("Projects");
   const defaultPageSize = Number.parseInt(localStorage.getItem("pages:projects-list") ?? 30);
-
-  const [modal, setModal] = React.useState(false);
-
-  const openModal = () => setModal(true);
-
-  const closeModal = () => setModal(false);
 
   const fetchProjects = async (page = currentPage, pageSize = defaultPageSize) => {
     setNetworkState("loading");
@@ -120,9 +112,7 @@ export const ProjectsPage = () => {
   }, []);
 
   React.useEffect(() => {
-    // there is a nice page with Create button when list is empty
-    // so don't show the context button in that case
-    setContextProps({ openModal, showButton: projectsList.length > 0 });
+    setContextProps({});
   }, [projectsList.length]);
 
   return (
@@ -142,9 +132,8 @@ export const ProjectsPage = () => {
               orgMap={orgMap}
             />
           ) : (
-            <EmptyProjectsList openModal={openModal} />
+            <EmptyProjectsList />
           )}
-          {modal && <CreateProject onClose={closeModal} />}
         </div>
       </Oneof>
     </div>
@@ -170,11 +159,4 @@ ProjectsPage.routes = ({ store }) => [
     },
   },
 ];
-ProjectsPage.context = ({ openModal, showButton }) => {
-  if (!showButton) return null;
-  return (
-    <Button onClick={openModal} size="small" aria-label="Create new project">
-      Create
-    </Button>
-  );
-};
+ProjectsPage.context = () => null;
