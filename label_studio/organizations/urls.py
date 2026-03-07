@@ -30,6 +30,11 @@ _api_urlpattens = [
         api.OrganizationMemberAdminAPI.as_view(),
         name='organization-membership-admin',
     ),
+    path(
+        '<int:pk>/members',
+        api.OrganizationAddMemberAPI.as_view(),
+        name='organization-add-member',
+    ),
 ]
 # TODO: these urlpatterns should be moved in core/urls with include('organizations.urls')
 urlpatterns = [

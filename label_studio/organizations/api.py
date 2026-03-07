@@ -454,6 +454,40 @@ class OrganizationResetTokenAPI(APIView):
         return Response(serializer.data, status=201)
 
 
+class OrganizationAddMemberAPI(APIView):
+    """Add an existing user or create a new user and add them to an organization."""
+    permission_classes = [IsAuthenticated]
+    parser_classes = [JSONParser]
+
+    def post(self, request, pk):
+        org = get_object_or_404(Organization, pk=pk)
+        if not org.has_permission(request.user):
+            raise PermissionDenied('You do not have access to this organization.')
+
+        user_id = request.data.get('user_id')
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+
+        if user_id:
+            # Add existing user
+            user = get_object_or_404(User, pk=user_id)
+        elif email and password:
+            # Create new user
+            if len(password) < 8:
+                return Response({'error': 'Password must be at least 8 characters.'}, status=400)
+            if User.objects.filter(email=email).exists():
+                return Response({'error': 'A user with this email already exists.'}, status=400)
+            user = User.objects.create_user(username=email, email=email, password=password)
+        else:
+            return Response({'error': 'Provide either user_id or email and password.'}, status=400)
+
+        if org.has_user(user):
+            return Response({'error': 'User is already a member of this organization.'}, status=400)
+
+        org.add_user(user)
+        return Response({'detail': f'User {user.email} added to organization.'}, status=201)
+
+
 class OrganizationMemberAdminAPI(GetParentObjectMixin, generics.GenericAPIView):
     parent_queryset = Organization.objects.all()
     permission_required = ViewClassPermission(
