@@ -94,6 +94,7 @@ docker-compose.override.yml
 # Local Netlify folder
 .netlify
 
+CLAUDE.md
 CLAUDE.local.md
 web/libs/editor/tests/coverage
 web/coverage-chunks
