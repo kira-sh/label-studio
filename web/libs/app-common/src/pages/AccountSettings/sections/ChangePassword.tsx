@@ -7,7 +7,7 @@ import { getApiInstance } from "@humansignal/core";
  * each one of these eventually has to be migrated to core or ui
  */
 import { Input } from "apps/labelstudio/src/components/Form/Elements";
-import styles from "../AccountSettings.module.scss";
+import styles from "../AccountSettings.module.css";
 
 export const ChangePassword = () => {
   const toast = useToast();
